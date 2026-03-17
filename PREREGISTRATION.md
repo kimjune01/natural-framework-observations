@@ -1,10 +1,10 @@
-# Preregistration: Do Behavioral Contracts Improve Decomposition Fidelity?
+# Preregistration: Natural Framework vs. Shannon
 
 *Pre-registered before any data collection. Timestamped by commit.*
 
 ## Study Information
 
-**Title:** Do Behavioral Contracts Between Pipeline Stages Improve Decomposition Fidelity? A Comparative Study of Eight Information-Processing Lenses
+**Title:** Behavioral Contracts vs. Information-Theoretic Constraints: Head-to-Head Fidelity Comparison of the Natural Framework and Shannon Communication Model
 
 **Authors:** June Kim
 
@@ -18,34 +18,56 @@
 
 ## Background
 
-Multiple frameworks decompose information-processing systems into named roles. Each compresses a system description into role labels. A high-fidelity lens lets you reconstruct what a component does from its label alone. A low-fidelity lens loses the signal.
+Both the Natural Framework (2026) and the Shannon Communication Model (1948) decompose information-processing systems into six named roles with formal inter-stage contracts. Both claim generality beyond their origin domain.
 
-Any framework can chain stages into a pipeline — type-compatible composition, expressible in TypeScript. The Natural Framework additionally specifies behavioral contracts: pre/postconditions at each role transition, where each role's postcondition guarantees what the next role's precondition requires. These contracts required a proof assistant (Lean 4) because they make claims about data content, not just data shape.
+Shannon's contracts are mathematical theorems — impossibility results about rate, capacity, and distortion that no system can violate. NF's contracts are behavioral pre/postconditions — guarantees about data content at each handoff, proven in Lean 4. Shannon's contracts describe limits. NF's contracts describe what must be true for the next stage to function.
 
-**Central question:** Do NF's contracts buy anything that other frameworks' contracts don't? Shannon has mathematical theorems. The immune system has molecular requirements. VSM has variety axioms. NF has behavioral pre/postconditions about data content. Each lens gets its full specification — contracts included. The study tests which *type* of contract helps most for decomposing information-processing systems. If NF wins, data-content contracts are the right abstraction level. If Shannon or Immune wins, NF's contracts operate at the wrong level of specificity. If all lenses with contracts cluster together and beat those without, contracts help but the type doesn't matter.
+Shannon is the champion: the most foundational, universally taught, mathematically rigorous decomposition of information processing. It has been actively applied to deep learning (information bottleneck, Tishby 2015), compression, and signal processing for 78 years.
 
-To control for granularity (more bins = more bits by construction), we compare lenses at matched bin counts: 5-6 bins. If NF beats other 6-bin lenses, the advantage is the contracts, not the resolution.
+**Central question:** Does a 2026 behavioral specification beat a 1948 mathematical theory at decomposing real systems? If NF wins, data-content contracts are a better abstraction level than information-theoretic limits. If Shannon wins, the Lean proof reinvented 1948 less elegantly. If they tie, both capture the same structure — the universal substrate is real, and two independent formalizations found it.
 
 ---
 
-## Lenses Under Comparison
+## The Two Lenses
 
-Eight lenses selected from a [catalog of 80+ frameworks](https://github.com/kimjune01/natural-framework-fidelity/blob/master/lens_catalog.md) enumerated by GPT-5.4 before data collection. Selection criteria: (1) claims to decompose information-processing systems generally, (2) has 5-7 named stages/roles, (3) comes from a distinct intellectual tradition.
+Both lenses have six roles, formal contracts, and domain-general aspirations. Full specifications in [`rubric.md`](rubric.md) and [`lenses/`](lenses/).
 
-| Lens | Bins | Origin | Key distinction |
-|------|------|--------|----------------|
-| Viable System Model | 5 | Cybernetics | Recursive: each viable system contains viable subsystems |
-| MAPE-K | 5 | Autonomic computing | Persistent Knowledge store shared across all stages |
-| Intelligence Cycle | 6 | Military/intelligence | Six stages with explicit feedback loop |
-| Shannon Communication | 6 | Information theory | Mathematically grounded; no feedback loop |
-| Immune Response | 6 | Immunology | Biological pipeline with memory and contraction |
-| F3EAD | 6 | Military operations | Operationally oriented; feedback via Disseminate→Find |
-| CRISP-DM | 6 | Data science | Cycles back from Evaluation to Business Understanding |
-| **Natural Framework** | **6** | **Formal specification** | **Pre/postcondition contracts at each role transition** |
+### Shannon Communication Model (1948)
 
-Full role definitions and decision criteria: [`rubric.md`](rubric.md).
+| Role | Definition | Contract |
+|------|-----------|---------|
+| **Source** | Produces the message | Output has entropy H(X) |
+| **Encoder** | Converts message into transmittable signal | Rate R ≥ H(X) for lossless; R < C for reliable transmission |
+| **Channel** | Medium the signal travels through | Capacity C = max I(X;Y); defines the bottleneck |
+| **Noise** | Interference corrupting the signal | Modeled by p(y\|x); decoder must know this |
+| **Decoder** | Reconstructs message from received signal | Must share codebook with encoder; error → 0 as block length → ∞ |
+| **Destination** | Intended recipient | Receives reconstructed message |
 
-Each lens gets its full specification as input to the LLM — role tables, definitions, decision criteria, and whatever inter-stage contracts its original source defines. Shannon gets its mathematical theorems. The immune schema gets its molecular requirements. VSM gets its variety axioms. NF gets its pre/postconditions. No lens gets invented contracts; no lens is denied its own. Detailed contract research per lens: [`lenses/`](lenses/).
+Contracts are **mathematical theorems** (source coding, channel capacity, rate-distortion, separation). [Full details →](lenses/shannon.md)
+
+### Natural Framework (2026)
+
+| Role | Definition | Precondition | Postcondition |
+|------|-----------|-------------|--------------|
+| **Perceive** | Ingest external input, convert to internal format | External data exists | Data is in internal format |
+| **Cache** | Temporarily hold data between steps | Data is in internal format | Data is buffered, retrievable |
+| **Filter** | Gate, threshold, or reject by criterion | Buffered data available | Failing items rejected; passing items remain |
+| **Attend** | Rank, score, or select among items | Items have been filtered | Items ranked by priority |
+| **Remember** | Write to persistent storage | Items ranked/selected | Data persisted, retrievable across cycles |
+| **Consolidate** | Read past outcomes, update parameters | Store contains past outcomes | Parameters updated; next cycle reflects past |
+
+Contracts are **behavioral pre/postconditions** proven in Lean 4. Each postcondition guarantees the next precondition. [Full details → The Natural Framework](https://june.kim/the-natural-framework)
+
+### Why Shannon is the Champion
+
+Shannon is the strongest possible competitor:
+- **Strongest formal contracts** of any decomposition framework (mathematical impossibility results)
+- **Most universally known** — taught in every CS/EE curriculum
+- **Actively applied** to modern AI (information bottleneck, neural network compression)
+- **Domain-general aspirations** — information theory claims to apply wherever information exists
+- **78-year track record** of successful application
+
+If NF can't beat Shannon, it can't beat anyone worth beating.
 
 ---
 
@@ -61,13 +83,13 @@ All pre-specified and mechanically enumerable.
 gh search repos "reinforcement learning" --language=python --sort=stars --limit=50
 ```
 
-RL repos are the strongest test case: they have explicit perceive/act/learn loops where all six NF roles are architecturally visible. If a lens diagnoses complex pipelines well, simpler systems follow. The reverse doesn't hold.
+RL repos are the strongest test case: they have explicit perceive/act/learn loops where all six NF roles are architecturally visible. Neither lens's home turf.
 
-**Bug issues (Phases 2-5):** Closed, labeled "bug", >= 10 comments, created 2022-2025. From all 50 repos (most qualifying issues will come from the top ~10).
+**Bug issues (Phases 2-5):** Closed, labeled "bug", >= 10 comments, created 2022-2025.
 
 **Predictive validity (Phase 6):** Top 5 repos only (richest commit history).
 
-**Health correlation (Phase 7):** All 50 repos. Sorting by stars gives a natural range of project health — the top repos are thriving, the tail is declining or stalled. Health measured by [Libraries.io SourceRank](https://docs.libraries.io/overview.html#sourcerank), a pre-existing composite score combining stars, contributors, releases, dependents, and maintenance signals. We use SourceRank as-is; modeling project health is not our contribution.
+**Health correlation (Phase 7):** All 50 repos. Health measured by [Libraries.io SourceRank](https://docs.libraries.io/overview.html#sourcerank).
 
 ### Source 2: Public Post-Mortems
 
@@ -91,7 +113,7 @@ Run all queries mechanically. Commit raw results before any mapping begins.
 
 ### Phase 2: Mapping
 
-For each data point (bug issue, post-mortem, or ablation row) and each lens:
+For each data point and each lens:
 
 **Mapper prompt** (used verbatim for each model × lens × data point):
 
@@ -99,18 +121,16 @@ For each data point (bug issue, post-mortem, or ablation row) and each lens:
 >
 > [component description inserted here]
 >
-> Here is a decomposition framework with [N] roles:
+> Here is a decomposition framework with 6 roles:
 >
-> [lens rubric inserted here — full specification per rubric.md, including pre/postconditions for NF]
+> [lens rubric inserted here — full specification including contracts]
 >
 > 1. Which role does this component best fit? Pick exactly one, or say "unmapped" if none fit.
 > 2. In one sentence, what does a component with this role label typically do?
 
-Each data point is mapped 3 times per model per lens (to measure consistency). Total per data point: 3 runs × 2 models × 8 lenses = 48 mapping calls.
+Each data point is mapped 3 times per model per lens. Total per data point: 3 runs × 2 models × 2 lenses = 12 mapping calls.
 
 ### Phase 3: Reconstruction
-
-For each mapping result, a separate judge model reconstructs:
 
 **Reconstruction prompt** (used verbatim):
 
@@ -118,13 +138,13 @@ For each mapping result, a separate judge model reconstructs:
 >
 > The framework defines this role as: "[ROLE_DEFINITION]"
 >
-> [If the framework specifies inter-stage contracts: "This role has the following contract — [CONTRACT_TEXT]"]
+> This role has the following contract: [CONTRACT_TEXT]
 >
-> Based only on this label, definition, and any contracts provided, write one sentence describing what this component most likely does. Be as specific as possible.
+> Based only on this label, definition, and contract, write one sentence describing what this component most likely does. Be as specific as possible.
 
 ### Phase 4: Judging
 
-A judge model (blind to lens identity — lens name replaced with "Lens A", "Lens B", etc., randomized per data point) scores reconstruction fidelity:
+A judge model (blind to lens identity — lens name replaced with "Lens A" and "Lens B", randomized per data point) scores reconstruction fidelity:
 
 **Judge prompt** (used verbatim):
 
@@ -147,25 +167,21 @@ Each judgment is run 3 times per judge model. Majority vote determines the score
 
 ### Phase 5: Actionability (Sources 1 and 2 only)
 
-For system failures, an additional reconstruction task:
-
 **Repair prompt** (used verbatim):
 
 > A system failure was categorized under the role "[ROLE_LABEL]" in a framework called "[LENS_NAME]".
 >
 > The framework defines this role as: "[ROLE_DEFINITION]"
 >
-> [If the framework specifies contracts for this role: "This role's contract is: [CONTRACT_TEXT]. The failure means this contract was violated."]
+> This role's contract is: [CONTRACT_TEXT]. The failure means this contract was violated.
 >
-> Based only on this label, definition, and any contract violation, write one sentence suggesting how to fix the system.
+> Based only on this label, definition, and contract violation, write one sentence suggesting how to fix the system.
 
-Judge scores the repair against the actual resolution (from the bug report or post-mortem) on the same 1-3 scale.
+Judge scores the repair against the actual resolution on the same 1-3 scale.
 
-### Phase 6: Predictive Validity (Source 1 repos only)
+### Phase 6: Predictive Validity (top 5 Source 1 repos)
 
-For each of the top 5 RL repos, test whether each lens's diagnosis of an early state predicts what actually happened later in the git history.
-
-**Step 1: Snapshot.** Check out the earliest tagged release (or the 25th-percentile commit if no tags exist). Record the hash.
+**Step 1: Snapshot.** Check out the earliest tagged release (or 25th-percentile commit). Record the hash.
 
 **Step 2: Diagnose.**
 
@@ -175,7 +191,7 @@ For each of the top 5 RL repos, test whether each lens's diagnosis of an early s
 >
 > [source code inserted here]
 >
-> Here is a decomposition framework with [N] roles:
+> Here is a decomposition framework with 6 roles:
 >
 > [lens rubric inserted here]
 >
@@ -184,7 +200,7 @@ For each of the top 5 RL repos, test whether each lens's diagnosis of an early s
 >
 > Be specific. Name files, functions, or behaviors.
 
-3 runs × 2 models × 8 lenses = 48 diagnosis calls per repo. Top 5 repos only.
+3 runs × 2 models × 2 lenses = 12 diagnosis calls per repo.
 
 **Step 3: Check against history.**
 
@@ -205,258 +221,151 @@ For each of the top 5 RL repos, test whether each lens's diagnosis of an early s
 
 ### Phase 7: Health Correlation (all 50 Source 1 repos)
 
-For each of the 50 RL repos, diagnose the current codebase (HEAD of default branch).
+Diagnose current codebase (HEAD) using both lenses. Count roles rated present, partial, or missing. Correlate role completeness with SourceRank.
 
-**Diagnosis prompt** (same as Phase 6 Step 2, applied to current code instead of early snapshot).
-
-Output per lens per repo: count of roles rated as present, partial, or missing. This gives a "role completeness" score (0-N where N = number of bins in the lens).
-
-Correlate role completeness with SourceRank across the 50 repos. The lens whose completeness score correlates most strongly with project health wins.
-
-3 runs × 2 models × 8 lenses = 48 calls per repo. 50 repos = 2,400 calls.
+3 runs × 2 models × 2 lenses = 12 calls per repo. 50 repos = 600 calls.
 
 ---
 
 ## Hypotheses
 
+Six hypotheses. One comparison per hypothesis. No multiple comparisons penalty.
+
 ### H1: Reconstruction Fidelity (primary)
 
-NF with contracts produces higher reconstruction scores than every other lens (which have labels only) at matched bin count.
+NF produces higher reconstruction scores than Shannon.
 
-**Test:** Wilcoxon signed-rank, paired by data point, Holm-Bonferroni corrected. NF vs each 6-bin lens separately; NF vs each 5-bin lens separately.
+**Test:** Wilcoxon signed-rank, paired by data point.
 
-**Success:** NF mean > every other 6-bin lens, p < 0.05. Data-content contracts are the highest-fidelity abstraction level.
+**Success:** NF mean > Shannon, p < 0.05. Behavioral contracts describe real systems better than information-theoretic limits.
 
-**Failure:** Another 6-bin lens with contracts (Shannon, Immune) >= NF. NF's contracts operate at the wrong level of specificity — or the type of contract doesn't matter, only having one does.
+**Failure:** Shannon >= NF. Mathematical constraints are sufficient. The Lean proof adds nothing over 1948.
 
 ### H2: Mapping Consistency
 
-NF produces higher self-consistency across 3 runs of the same model.
+NF produces higher self-consistency across 3 runs than Shannon.
 
-**Test:** Fleiss' kappa across 3 runs per model, computed per lens.
+**Test:** Fleiss' kappa across 3 runs per model, per lens.
 
-**Success:** NF kappa > every other lens for both models. The contracts reduce ambiguity in role assignment.
+**Success:** NF kappa > Shannon kappa for both models. Behavioral contracts reduce ambiguity.
 
-**Failure:** Any 6-bin lens > NF for both models. The pre/postconditions create confusion rather than clarity.
+**Failure:** Shannon kappa >= NF. Mathematical crispness beats behavioral specificity. Shannon's roles are less ambiguous because they're defined by theorems.
 
 ### H3: Diagnostic Actionability
 
-For system failures, NF's contract-aware role labels produce repair suggestions that match actual resolutions better than other lenses.
+NF role labels produce repair suggestions that match actual resolutions better than Shannon.
 
-**Test:** Wilcoxon signed-rank, paired by failure, Holm-Bonferroni corrected.
+**Test:** Wilcoxon signed-rank, paired by failure.
 
-**Success:** NF mean > every other lens, p < 0.05. Knowing which postcondition was violated points to the fix.
+**Success:** NF mean > Shannon, p < 0.05. "Filter's postcondition is violated" points to fixes better than "channel capacity exceeded."
 
-**Failure:** No significant differences. Contracts don't help repair.
+**Failure:** Shannon >= NF. Information-theoretic diagnosis is equally or more actionable.
 
 ### H4: Predictive Validity
 
-NF diagnoses of early-stage codebases produce predictions that match subsequent git history better than other lenses.
+NF diagnoses of early-stage codebases predict subsequent development better than Shannon.
 
-**Test:** Wilcoxon signed-rank, paired by repo × prediction, Holm-Bonferroni corrected.
+**Test:** Wilcoxon signed-rank, paired by repo × prediction.
 
-**Success:** NF mean prediction score > every other lens, p < 0.05. The ordering constraints (each role's postcondition enables the next) predict the sequence of development.
+**Success:** NF mean > Shannon, p < 0.05. The handshake (each postcondition enables the next precondition) predicts what gets built next.
 
-**Failure:** Any other lens >= NF. The contracts don't predict what gets built next.
-
-**Note:** This is where the contracts are most directly tested. Fidelity (H1) measures whether contracts help describe what exists. Predictive validity measures whether the handshake — each postcondition enabling the next precondition — tells you what's coming. A lens without contracts can say "this role is missing." Only NF can say "this role is missing, therefore the downstream roles are starved."
+**Failure:** Shannon >= NF. Rate/capacity constraints predict development equally well.
 
 ### H5: Health Correlation
 
-NF role completeness correlates more strongly with project health (SourceRank) than role completeness under any other lens.
+NF role completeness correlates more strongly with project health (SourceRank) than Shannon role completeness.
 
-**Test:** Spearman's rho between role completeness and SourceRank, computed per lens. Compare correlation coefficients across lenses using Steiger's test for dependent correlations.
+**Test:** Steiger's test comparing Spearman's rho (NF vs SourceRank) against rho (Shannon vs SourceRank), n=50.
 
-**Success:** NF rho > every other lens's rho, p < 0.05.
+**Success:** NF rho > Shannon rho, p < 0.05.
 
-**Failure:** Another lens's completeness correlates equally or more strongly.
+**Failure:** Shannon rho >= NF. Information-theoretic completeness tracks health equally well.
 
-**Power note:** n=50 repos detects Spearman's rho >= 0.28 at p < 0.05. If the true effect is smaller, this test is underpowered. Report the confidence interval regardless.
+**Power note:** n=50 detects rho difference >= 0.28 at p < 0.05.
 
 ### H6: Domain Independence
 
-NF has lower variance in fidelity scores across the three data sources (RL bugs, post-mortems, ablation tables) than any other lens.
+NF has lower variance in fidelity scores across the three data sources than Shannon.
 
-The claim is not that NF is flexible. The claim is that these domains are structurally self-similar — they are all information processing underneath — and NF captures that shared structure. A domain-specific lens (Shannon on signal processing, VSM on organizations) should spike on its home turf and drop elsewhere. A domain-independent lens should perform uniformly.
+NF claims domains are structurally self-similar — all information processing underneath. Shannon claims information theory applies wherever information exists. Both claim generality. The more domain-independent lens will perform uniformly across sources; the more domain-specific one will spike on its home turf.
 
-**Test:** For each lens, compute mean fidelity per data source. Levene's test for equality of variances across sources, per lens. Compare variance profiles.
+**Test:** Levene's test comparing cross-source variance of NF fidelity vs Shannon fidelity.
 
-**Success:** NF has the lowest cross-source variance among all lenses, and its mean fidelity is competitive (top 3). The self-similarity claim holds.
+**Success:** NF variance < Shannon variance. NF captures cross-domain structure that Shannon misses.
 
-**Failure:** Another lens has equally flat performance. The self-similarity is real but already captured by an existing framework. NF adds nothing.
-
-**The deeper failure:** Shannon shows flat variance. Information theory already describes the universal substrate. The Lean proof reinvented 1948.
+**Failure:** Shannon variance <= NF. Information theory is already domain-independent. The universal substrate was described in 1948.
 
 ---
 
 ## Analysis Plan
 
-### H1 Analysis
-
 ```
-For each data point d and each lens L:
+For each data point d and each lens L ∈ {NF, Shannon}:
   fidelity(d, L) = median score across 3 mapper runs × 2 judge models
 
-For each 6-bin lens pair (NF, other):
-  W, p = wilcoxon_signed_rank(scores_NF, scores_other)
+H1: W, p = wilcoxon_signed_rank(fidelity_NF, fidelity_Shannon)
+H2: compare kappa_NF vs kappa_Shannon per model
+H3: W, p = wilcoxon_signed_rank(action_NF, action_Shannon)
+H4: W, p = wilcoxon_signed_rank(predict_NF, predict_Shannon)
+H5: z, p = steiger_test(rho_NF, rho_Shannon, n=50)
+H6: F, p = levene_test(fidelity_NF by source, fidelity_Shannon by source)
 
-For each 5-bin lens pair (NF, other):
-  W, p = wilcoxon_signed_rank(scores_NF, scores_other)
-
-├─ NF > all seven others at p < 0.05 (Holm-Bonferroni)?
-│   └─ CONFIRMED: contracts improve fidelity
-├─ NF > all 6-bin lenses but not all 5-bin lenses?
-│   └─ PARTIAL: contracts help at matched granularity
-├─ Another 6-bin lens >= NF?
-│   └─ DISCONFIRMED: contracts don't improve fidelity
-└─ Report full pairwise matrix with effect sizes
+Six tests. No multiple comparisons correction needed for a single primary
+comparison. Report effect sizes and confidence intervals for all.
 ```
-
-### H2 Analysis
-
-```
-For each lens L and each model M:
-  kappa(L, M) = Fleiss' kappa across 3 mapping runs
-
-├─ NF kappa highest for both models?
-│   └─ CONFIRMED: contracts reduce role ambiguity
-├─ NF kappa highest for one model only?
-│   └─ MODEL-DEPENDENT: consistency depends on the mapper
-├─ Another 6-bin lens > NF for both models?
-│   └─ DISCONFIRMED: contracts increase ambiguity
-└─ Report per-role kappa to identify hardest NF boundaries
-```
-
-### H3 Analysis
-
-```
-For each failure f and each lens L:
-  actionability(f, L) = median score across runs × judge models
-
-For each lens pair (NF, other):
-  W, p = wilcoxon_signed_rank(action_NF, action_other)
-
-├─ NF > all others at p < 0.05?
-│   └─ CONFIRMED: contract violations point to fixes
-├─ No significant differences?
-│   └─ DISCONFIRMED: contracts don't help repair
-└─ Report all pairwise comparisons
-```
-
-### H4 Analysis
-
-```
-For each repo r and each lens L:
-  predictions(r, L) = list of scored predictions from Phase 6
-  mean_score(L) = mean across all repos and predictions
-
-For each lens pair (NF, other):
-  W, p = wilcoxon_signed_rank(scores_NF, scores_other)
-
-├─ NF > all others at p < 0.05?
-│   └─ CONFIRMED: handshake predicts development sequence
-├─ Another lens > NF?
-│   └─ DISCONFIRMED: ordering constraints don't predict
-└─ Report per-repo results to check consistency
-```
-
-### H5 Analysis
-
-```
-For each lens L:
-  completeness(repo, L) = mean roles rated "present" across 3 runs × 2 models
-  rho(L) = spearman(completeness across 50 repos, SourceRank across 50 repos)
-
-For each lens pair (NF, other):
-  z, p = steiger_test(rho_NF, rho_other, n=50)
-
-├─ NF rho > all others at p < 0.05?
-│   └─ CONFIRMED: NF completeness tracks project health best
-├─ Multiple lenses tied?
-│   └─ PARTIAL: role completeness predicts health, but not uniquely via NF
-├─ No lens correlates significantly?
-│   └─ NULL: role completeness doesn't predict health
-└─ Report all rho values with 95% CI
-```
-
-### H6 Analysis
-
-```
-For each lens L:
-  mean_fidelity(L, source) = mean fidelity across data points in that source
-  variance_profile(L) = variance of mean_fidelity across 3 sources
-
-Levene's test per lens: are the three source-level distributions equal?
-
-├─ NF has lowest cross-source variance AND competitive mean?
-│   └─ CONFIRMED: NF captures cross-domain self-similarity
-├─ Another lens has equally flat performance?
-│   └─ DISCONFIRMED: self-similarity already captured elsewhere
-├─ All lenses with contracts show flat variance?
-│   └─ PARTIAL: contracts enable domain transfer; type doesn't matter
-├─ No lens is flat (all spike on home turf)?
-│   └─ NULL: domains aren't self-similar at this resolution
-└─ Report variance profile per lens with per-source means
-```
-
-### Multiple Comparisons
-
-Six hypotheses. H1-H4: seven pairwise tests each = 28. H5: 7 Steiger tests. H6: 7 pairwise variance comparisons = 42 primary tests total. Holm-Bonferroni correction. Report both corrected and uncorrected p-values.
 
 ### Cross-Model Agreement
 
-For each lens, compare GPT-5.4 and Sonnet 4.5 mappings. If the two models disagree systematically by lens, the result is model-dependent. Report as a limitation.
+Compare GPT-5.4 and Sonnet 4.5 mappings for each lens. If the models disagree (one favors NF, the other Shannon), the result is model-dependent.
 
 ### Exploratory Analyses (labeled as such)
 
 - Which NF role boundaries cause the most inconsistency? (per-role kappa)
-- Do any lenses cluster? (if two lenses always agree, they're the same lens in practice)
-- Which lens produces the most "unmapped" cases?
-- Role correspondence matrix: which roles across lenses map to the same components?
-- Do lenses with stronger contracts consistently outperform those without? (contract strength as a predictor)
+- Which Shannon role boundaries cause the most inconsistency?
+- Per-source breakdown: does either lens spike on a particular data source?
+- Role correspondence: which NF roles map to which Shannon roles on the same components?
+- Do the lenses agree on "unmapped" cases?
 
 ---
 
 ## Predictions
 
-| Hypothesis | Predicted ranking (best → worst) | Rationale |
-|-----------|----------------------------------|-----------|
-| H1 (fidelity) | NF > Immune > Intel Cycle > F3EAD > Shannon > CRISP-DM > MAPE-K > VSM | NF's contracts distinguish Cache/Remember and Filter/Attend at the behavioral level. Immune has biological memory but no formal contracts. Shannon has no feedback. |
-| H2 (consistency) | Shannon > CRISP-DM > NF > Intel Cycle > Immune > F3EAD > MAPE-K > VSM | Shannon's roles are mathematically crisp. NF's contracts should help, but the Filter/Attend boundary will still cause splits. VSM's System 3 vs 4 is notoriously ambiguous. |
-| H3 (actionability) | NF > MAPE-K > Intel Cycle > F3EAD > Immune > CRISP-DM > Shannon > VSM | "Filter's postcondition is violated — items that should be rejected are reaching Attend" points to the fix. "Channel has noise" does not. |
-| H4 (prediction) | NF > MAPE-K > Immune > Intel Cycle > CRISP-DM > F3EAD > Shannon > VSM | The handshake predicts ordering: earlier stages get built first because downstream stages can't fire without their preconditions met. No other lens makes this claim. |
-| H5 (health) | NF > MAPE-K > VSM > Intel Cycle > Immune > CRISP-DM > F3EAD > Shannon | NF and MAPE-K roles map to implementation concerns that affect health. VSM was designed to diagnose organizational viability. |
-| H6 (domain independence) | NF flattest, then Immune, then Shannon. VSM spikes on post-mortems, CRISP-DM spikes on ablations | NF and Immune are domain-general by design. Shannon is domain-general but a poor fit for non-communication systems. VSM is organizational. CRISP-DM is data science. |
+| Hypothesis | Prediction | Rationale |
+|-----------|-----------|-----------|
+| H1 (fidelity) | NF > Shannon | NF's contracts distinguish Cache/Remember and Filter/Attend at the behavioral level. Shannon collapses these: Cache and Channel overlap; Filter has no analog. |
+| H2 (consistency) | Shannon > NF | Shannon's roles are defined by mathematical theorems. "Is it the channel or the noise?" is crisper than "is it Filter or Attend?" |
+| H3 (actionability) | NF > Shannon | "Filter's postcondition is violated — items that should be rejected are reaching Attend" points to a fix. "Channel capacity exceeded" tells you the limit, not the repair. |
+| H4 (prediction) | NF > Shannon | NF's handshake predicts ordering: earlier stages get built first. Shannon has no ordering prediction — all stages are instantiated simultaneously in a communication system. |
+| H5 (health) | NF > Shannon | NF roles map to implementation concerns (buffering, filtering, persistence). Shannon roles map to communication architecture (encoding, channels). Implementation gaps predict health; architecture gaps are less specific. |
+| H6 (domain independence) | NF flatter | Shannon will spike on signal-processing-adjacent failures and drop on organizational post-mortems. NF should perform uniformly because its contracts are about data content, not communication structure. |
 
 ### What Would Change Our Minds
 
 | Outcome | Implication |
 |---------|------------|
-| NF wins H1-H4 | Contracts are load-bearing. The Lean proof was necessary. Ship the framework. |
-| NF wins H4 but ties H1 | The handshake predicts, but the labels don't describe better than alternatives. The ordering theory is load-bearing; the vocabulary is not. The proof was necessary for the wrong reason. |
-| NF ties all 6-bin lenses on H1 | **Devastating if lenses without contracts.** Any six roles work equally well. But if all lenses *with* contracts cluster above those without, the finding is: contracts help, type doesn't matter. |
-| Shannon beats NF on H2 but loses H1 | Mathematical crispness aids consistency but not fidelity. Crisp categories can be consistently wrong. |
-| MAPE-K beats NF on H3 | Engineering-native vocabulary is more actionable than formal contracts. Practitioners need familiar terms, not postconditions. |
-| Immune ties NF on H1 | Molecular-level contracts are equally high-fidelity. NF and Immune may be the same lens at different abstraction levels. |
-| Shannon beats NF on H1 | Information-theoretic contracts are more useful than behavioral ones. Mathematical rigor > domain specificity. |
-| All 6-bin lenses cluster on H1, but NF separates on H4 | The best possible outcome for the theory. Six bins is the right number (any vocabulary works for description), but the contracts predict what labels can't. |
-| Shannon shows flat variance on H6 | Information theory already describes the universal substrate. The Lean proof reinvented 1948. |
-| NF loses all six | The six roles are a formal specification with no practical advantage. |
+| NF wins H1, H3, H4, H6 | Behavioral contracts are load-bearing across all dimensions. The Lean proof was necessary. Ship the framework. |
+| NF wins H1, H3; Shannon wins H2 | Behavioral contracts describe and diagnose better, but mathematical contracts are more consistent. Each has its domain. |
+| Shannon wins H1 | **The devastating result.** Information-theoretic constraints decompose real systems better than behavioral pre/postconditions. The Lean proof is a verbose restatement of Shannon in dependent types. |
+| Shannon wins H2 but loses everything else | Mathematical crispness aids consistency but not utility. Crisp categories can be consistently wrong about the real world. |
+| Tie on H1, NF wins H4 | The vocabulary is interchangeable, but the handshake predicts. The ordering theory is load-bearing; the role names are not. |
+| Tie on everything | Both formalizations capture the same structure. The universal substrate is real, and two independent approaches found it 78 years apart. NF's contribution is the explicit pipeline ordering, not the decomposition. |
+| Shannon wins H6 | Information theory is already domain-independent. The universal substrate was described in 1948. |
+| NF loses all six | The six roles are a formal specification with no practical advantage over the most famous framework in information science. |
 
 ---
 
 ## Budget
 
-No human coders. Each trial is a CLI call.
+No human coders. Each trial is a CLI call. Two lenses instead of eight.
 
 | Phase | Per unit | Units | Calls |
 |-------|----------|-------|-------|
-| Phases 2-5 | ~160 calls/data point | ~100 data points | ~16,000 |
-| Phase 6 | ~96 calls/repo | 5 repos | ~480 |
-| Phase 7 | ~48 calls/repo | 50 repos | ~2,400 |
-| **Total** | | | **~18,900** |
+| Phases 2-5 | ~40 calls/data point | ~100 data points | ~4,000 |
+| Phase 6 | ~24 calls/repo | 5 repos | ~120 |
+| Phase 7 | ~12 calls/repo | 50 repos | ~600 |
+| **Total** | | | **~4,700** |
 
-At ~10s per call: ~53 hours wall clock. Parallelizable across models and lenses.
+At ~10s per call: ~13 hours wall clock. Parallelizable across models.
 
 ---
 
@@ -465,7 +374,7 @@ At ~10s per call: ~53 hours wall clock. Parallelizable across models and lenses.
 Fixed dataset. Map everything that qualifies. No adaptive stopping.
 
 **Minimum viable dataset:**
-- Source 1 (bugs): >= 20 qualifying bug issues across all 50 repos
+- Source 1 (bugs): >= 20 qualifying bug issues
 - Source 1 (health): all 50 repos with valid SourceRank scores
 - Source 2: >= 30 qualifying post-mortems
 - Source 3: >= 50 ablation rows
@@ -483,7 +392,7 @@ data/
 ├── reconstructions/      # {datapoint}_{lens}_{model}_{run}_recon.json
 ├── judgments/            # {datapoint}_{lens}_{model}_{run}_judge{1,2,3}.json
 ├── repairs/              # {datapoint}_{lens}_{model}_{run}_repair.json
-├── diagnoses/            # {repo}_{lens}_{model}_{run}_diag.json (Phases 6-7)
+├── diagnoses/            # {repo}_{lens}_{model}_{run}_diag.json
 ├── health/               # {repo}_sourcerank.json
 ├── scores/               # Aggregated scores per data point per lens
 └── analysis/             # Final results, plots
@@ -516,13 +425,13 @@ data/
 
 ## Limitations
 
-**Survivorship bias (H4, partially addressed by H5).** H4 uses the top 5 RL repos — projects that survived. H5 partially addresses this by expanding to 50 repos sorted by stars, which naturally spans a range of project health (thriving to declining). However, the sample is still biased toward repos with enough stars to appear in the top 50. Projects that died before gaining any traction are absent. The framework's strongest claim (breaking a role compounds to extinction) would require a prospective study tracking projects from inception.
+**Survivorship bias (H4, partially addressed by H5).** H4 uses the top 5 RL repos — projects that survived. H5 expands to 50 repos with natural health variance. Projects that died before gaining traction are absent.
 
-**Tech-domain bias (all hypotheses).** All three sources are software/ML. The framework claims to apply to comedy, immune systems, law, and evolution. This study tests tech systems only. A positive result does not validate cross-domain generality; a negative result does not rule it out.
+**Tech-domain bias (all hypotheses).** All three sources are software/ML. Both frameworks claim broader generality. This study tests tech systems only.
 
-**LLM bias (all hypotheses).** Both mapper models were trained on text describing all eight lenses. If one lens appears more in training data, the model may apply it more fluently — reflecting training distribution, not lens quality. Cross-model comparison partially controls for this.
+**LLM bias (all hypotheses).** Shannon appears far more in training data than NF. If training-data fluency helps, Shannon has an unfair advantage. Cross-model comparison partially controls for this.
 
-**Contract research quality.** Each lens gets its contracts as documented in its canonical sources. The researcher has deeper familiarity with NF's contracts than with, say, Shannon's theorems or VSM's variety axioms. Mitigation: contract research for each lens is committed in [`lenses/`](lenses/) and can be audited. The LLM sees only the rubric text.
+**Contract research quality.** The researcher designed NF's contracts and researched Shannon's from canonical sources. Shannon's contracts are well-documented (textbook-level); NF's are the researcher's own work. Mitigation: both rubrics are committed verbatim and auditable. [Shannon contract research →](lenses/shannon.md)
 
 ---
 
@@ -535,4 +444,4 @@ data/
 
 ---
 
-*Preregistration designed collaboratively with Claude Opus 4.6 (via Claude Code) and GPT-5.4 (via Codex CLI, lens enumeration). Eight competing lenses selected from a catalog of 80+ frameworks to ensure fair comparison at matched granularity.*
+*Head-to-head comparison: the Natural Framework (2026, Lean 4) vs. the Shannon Communication Model (1948, information theory). Champion vs. challenger. Both have six roles and formal contracts. The question is which type of contract decomposes real systems with higher fidelity.*

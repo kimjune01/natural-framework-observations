@@ -22,13 +22,13 @@ The Shannon Communication Model (1948) and the Natural Framework (NF, 2026) both
 
 Shannon is physics: mathematical theorems about rate, capacity, and distortion. Laws that hold regardless of implementation. You need instruments to measure them. NF is chemistry: behavioral pre/postconditions about data content at each handoff, proven in Lean 4. Observable from the artifacts. You can read them off the bench.
 
-**Central question:** Which level of description is more useful for diagnosing software systems from their static artifacts (source code, bug reports, ablation tables)? NF doesn't claim to replace Shannon any more than chemistry replaces physics. The question is which level matches the instruments we have.
+**Central question:** Do behavioral contracts help? NF's six roles can be stated with or without pre/postconditions. With contracts, you need the Lean proof. Without, you need TypeScript at most. This study compares three conditions — Shannon (physics-level contracts), NF with contracts (chemistry-level contracts), and NF without contracts (labels only) — to isolate whether contracts are load-bearing, and if so, which type.
 
 ---
 
-## The Two Lenses
+## The Three Conditions
 
-Both lenses have six roles, formal contracts, and domain-general aspirations. Full specifications in [`rubric.md`](rubric.md) and [`lenses/`](lenses/).
+Full specifications in [`rubric.md`](rubric.md) and [`lenses/`](lenses/).
 
 ### Shannon Communication Model (1948)
 
@@ -56,20 +56,33 @@ Contracts are **mathematical theorems** (source coding, channel capacity, rate-d
 
 Contracts are **behavioral pre/postconditions** proven in Lean 4. Each postcondition guarantees the next precondition. [Full details → The Natural Framework](https://june.kim/the-natural-framework)
 
+### NF-bare (labels only)
+
+| Role | Definition |
+|------|-----------|
+| **Perceive** | Ingest external input, convert to internal format |
+| **Cache** | Temporarily hold data between steps |
+| **Filter** | Gate, threshold, or reject by criterion |
+| **Attend** | Rank, score, or select among items |
+| **Remember** | Write to persistent storage |
+| **Consolidate** | Read past outcomes, update parameters |
+
+Same six roles and definitions as NF. **No pre/postconditions.** This is NF as TypeScript interfaces — the role vocabulary without the Lean proof.
+
 ### Controlled Comparison
 
-| Dimension | Shannon | NF | Same? |
-|-----------|---------|-----|-------|
-| Role count | 6 | 6 | **Yes** |
-| Formal contracts | Yes (mathematical theorems) | Yes (Lean 4 pre/postconditions) | **Yes** |
-| Domain-general claim | Yes | Yes | **Yes** |
-| Proven | Yes (1948, information theory) | Yes (2026, dependent types) | **Yes** |
-| Contract type | Continuous inequalities (R ≥ H(X)) | Binary predicates (postcondition holds or doesn't) | **No** |
-| Contract content | Limits on rates and capacities | Data state at each handoff | **No** |
-| Stage ordering | No inherent order (all co-instantiated) | Pipeline with explicit ordering (handshake) | **No** |
-| Origin domain | Communication engineering | Cognition / software | **No** |
+| Dimension | Shannon | NF | NF-bare |
+|-----------|---------|-----|---------|
+| Role count | 6 | 6 | 6 |
+| Role definitions | Communication-theoretic | Behavioral | Behavioral (same as NF) |
+| Formal contracts | Mathematical theorems | Lean 4 pre/postconditions | **None** |
+| Contract type | Continuous inequalities | Binary predicates | — |
+| Stage ordering | No inherent order | Pipeline (handshake) | Pipeline (implied by definitions) |
+| Origin domain | Communication engineering | Cognition / software | Cognition / software |
 
-The four "No" rows are the independent variables. Everything this study measures is the effect of those differences.
+**Delta 1 (NF vs NF-bare):** Do contracts help? Same roles, same definitions, same ordering. The only difference is the pre/postconditions in the prompt. This is the sharp test. If contracts don't help, the Lean proof is ceremony.
+
+**Delta 2 (NF vs Shannon):** Which level of description? Different roles, different contract type, different origin. This is context — physics vs chemistry with all confounds intact.
 
 ### Observability Skew
 
@@ -123,9 +136,9 @@ Run all queries mechanically. Commit raw results before any mapping begins.
 
 ### Phase 2: Mapping
 
-For each data point and each lens:
+For each data point and each condition:
 
-**Mapper prompt** (used verbatim for each model × lens × data point):
+**Mapper prompt** (used verbatim for each model × condition × data point):
 
 > Here is a component or failure description from a real system:
 >
@@ -133,16 +146,16 @@ For each data point and each lens:
 >
 > Here is a decomposition framework with 6 roles:
 >
-> [lens rubric inserted here — full specification including contracts]
+> [condition rubric inserted here — full specification for Shannon and NF; definitions only for NF-bare]
 >
 > 1. Which role does this component best fit? Pick exactly one, or say "unmapped" if none fit.
 > 2. In one sentence, what does a component with this role label typically do?
 
-3 runs × 2 models × 2 lenses = 12 mapping calls per data point.
+3 runs × 2 models × 3 conditions = 18 mapping calls per data point.
 
 ### Phase 3: Reconstruction
 
-**Reconstruction prompt** (used verbatim):
+**Reconstruction prompt** (used verbatim; for NF-bare, the contract line is omitted):
 
 > A component in an information-processing system was labeled with the role "[ROLE_LABEL]" in a framework called "[LENS_NAME]".
 >
@@ -154,7 +167,7 @@ For each data point and each lens:
 
 ### Phase 4: Judging
 
-Judge model scores reconstruction fidelity, blind to lens identity ("Lens A"/"Lens B", randomized per data point):
+Judge model scores reconstruction fidelity, blind to condition identity ("Lens A"/"Lens B"/"Lens C", randomized per data point):
 
 **Judge prompt** (used verbatim):
 
@@ -173,11 +186,11 @@ Judge model scores reconstruction fidelity, blind to lens identity ("Lens A"/"Le
 >
 > Return: {"score": N, "rationale": "one sentence"}
 
-3 runs per judge model, majority vote. Both GPT-5.4 and Sonnet 4.5 judge every reconstruction independently.
+3 runs per judge model, majority vote. GPT-5.4 and Sonnet 4.5 judge every reconstruction independently.
 
 ### Phase 5: Actionability (Sources 1 and 2 only)
 
-**Repair prompt** (used verbatim):
+**Repair prompt** (used verbatim; for NF-bare, contract lines are omitted):
 
 > A system failure was categorized under the role "[ROLE_LABEL]" in a framework called "[LENS_NAME]".
 >
@@ -210,7 +223,7 @@ Judge scores the repair against the actual resolution on the same 1-3 scale.
 >
 > Be specific. Name files, functions, or behaviors.
 
-3 runs × 2 models × 2 lenses = 12 diagnosis calls per repo.
+3 runs × 2 models × 3 conditions = 18 diagnosis calls per repo.
 
 **Step 3: Check against history.**
 
@@ -231,100 +244,105 @@ Judge scores the repair against the actual resolution on the same 1-3 scale.
 
 ### Phase 7: Health Correlation (all 50 Source 1 repos)
 
-Diagnose current codebase (HEAD) using both lenses. Count roles rated present, partial, or missing. Correlate role completeness with SourceRank.
+Diagnose current codebase (HEAD) using all three conditions. Count roles rated present, partial, or missing. Correlate role completeness with SourceRank.
 
-3 runs × 2 models × 2 lenses = 12 calls per repo. 50 repos = 600 calls.
+3 runs × 2 models × 3 conditions = 18 calls per repo. 50 repos = 900 calls.
 
 ---
 
 ## Hypotheses
 
-Five hypotheses, one comparison each. No multiple comparisons correction needed.
+Two planned contrasts, three secondary hypotheses. No multiple comparisons correction needed — the two contrasts test different questions (contracts vs vocabulary).
 
 ### Why Not Mapping Consistency?
 
-Any well-defined 6-bin taxonomy produces consistent LLM mappings. Consistency measures how crisp the bins are, not how useful. Shannon's roles are defined by mathematical theorems — "channel or noise?" is unambiguous. That crispness could produce high consistency while preserving zero diagnostic information. We report per-lens Fleiss' kappa as an exploratory check, not as a hypothesis.
+Any well-defined 6-bin taxonomy produces consistent LLM mappings. Consistency measures how crisp the bins are, not how useful. We report per-condition Fleiss' kappa as an exploratory check, not as a hypothesis.
 
-### H1: Reconstruction Fidelity (primary)
+### H1: Do Contracts Help? (primary)
 
-NF produces higher reconstruction scores than Shannon.
+NF-with-contracts produces higher reconstruction scores than NF-bare.
+
+**Test:** Wilcoxon signed-rank, paired by data point. Same roles, same definitions. The only difference is pre/postconditions in the prompt.
+
+**Success:** NF > NF-bare, p < 0.05. Contracts are load-bearing. The Lean proof was necessary.
+
+**Failure:** NF-bare >= NF. Contracts don't help. The six role labels carry the information; the pre/postconditions are ceremony. You don't need Lean for this.
+
+### H2: Which Level of Description? (secondary)
+
+NF-with-contracts produces higher reconstruction scores than Shannon.
 
 **Test:** Wilcoxon signed-rank, paired by data point.
 
-**Success:** NF mean > Shannon, p < 0.05. Behavioral contracts describe real systems better than information-theoretic limits.
+**Success:** NF > Shannon, p < 0.05. Chemistry beats physics at the lab bench.
 
-**Failure:** Shannon >= NF. Mathematical constraints are sufficient. The Lean proof adds nothing over 1948.
+**Failure:** Shannon >= NF. Physics-level descriptions are useful even without physics-level instruments.
 
-### H2: Diagnostic Actionability
+### H3: Do Contracts Help Diagnosis?
 
-NF role labels produce repair suggestions that match actual resolutions better than Shannon.
+NF-with-contracts produces repair suggestions that match actual resolutions better than NF-bare.
 
 **Test:** Wilcoxon signed-rank, paired by failure.
 
-**Success:** NF mean > Shannon, p < 0.05. "Filter's postcondition is violated" points to fixes better than "channel capacity exceeded."
+**Success:** NF > NF-bare, p < 0.05. "Filter's postcondition violated" points to fixes better than "Filter" alone.
 
-**Failure:** Shannon >= NF. Information-theoretic diagnosis is equally or more actionable.
+**Failure:** NF-bare >= NF. The role label is enough to diagnose; the contract adds nothing.
 
-### H3: Predictive Validity
+### H4: Do Contracts Help Prediction?
 
-NF diagnoses of early-stage codebases predict subsequent development better than Shannon.
+NF-with-contracts predicts subsequent development better than NF-bare.
 
 **Test:** Wilcoxon signed-rank, paired by repo × prediction.
 
-**Success:** NF mean > Shannon, p < 0.05. The handshake (each postcondition enables the next precondition) predicts what gets built next.
+**Success:** NF > NF-bare, p < 0.05. The handshake predicts what gets built next.
 
-**Failure:** Shannon >= NF. Rate/capacity constraints predict development equally well.
+**Failure:** NF-bare >= NF. The pipeline ordering implicit in the definitions is sufficient.
 
-### H4: Health Correlation
+### H5: Health Correlation
 
-NF role completeness correlates more strongly with project health (SourceRank) than Shannon role completeness.
+NF role completeness correlates more strongly with project health (SourceRank) than Shannon role completeness and NF-bare role completeness.
 
-**Test:** Steiger's test comparing Spearman's rho (NF vs SourceRank) against rho (Shannon vs SourceRank), n=50.
+**Test:** Steiger's test comparing three Spearman's rho values pairwise, n=50.
 
-**Success:** NF rho > Shannon rho, p < 0.05.
+**Success:** NF rho > NF-bare rho > Shannon rho. Contracts help; NF vocabulary helps more than Shannon vocabulary.
 
-**Failure:** Shannon rho >= NF. Information-theoretic completeness tracks health equally well.
+**Failure:** All three rho values are similar. Role completeness tracks health regardless of framework.
 
 **Power note:** n=50 detects rho difference >= 0.28 at p < 0.05.
-
-### H5: Domain Independence
-
-NF has lower variance in fidelity scores across the three data sources than Shannon. Both lenses claim generality. The more domain-independent lens performs uniformly; the more domain-specific one spikes on its home turf.
-
-**Test:** Levene's test comparing cross-source variance of NF fidelity vs Shannon fidelity.
-
-**Success:** NF variance < Shannon variance. NF captures cross-domain structure that Shannon misses.
-
-**Failure:** Shannon variance <= NF. Information theory is already domain-independent.
 
 ---
 
 ## Analysis Plan
 
 ```
-For each data point d and each lens L ∈ {NF, Shannon}:
-  fidelity(d, L) = median score across 3 mapper runs × 2 judge models
+For each data point d and each condition C ∈ {NF, NF-bare, Shannon}:
+  fidelity(d, C) = median score across 3 mapper runs × 2 judge models
 
-H1: W, p = wilcoxon_signed_rank(fidelity_NF, fidelity_Shannon)
-H2: W, p = wilcoxon_signed_rank(action_NF, action_Shannon)
-H3: W, p = wilcoxon_signed_rank(predict_NF, predict_Shannon)
-H4: z, p = steiger_test(rho_NF, rho_Shannon, n=50)
-H5: F, p = levene_test(fidelity_NF by source, fidelity_Shannon by source)
+Primary (contracts test):
+  H1: W, p = wilcoxon_signed_rank(fidelity_NF, fidelity_NF_bare)
+  H3: W, p = wilcoxon_signed_rank(action_NF, action_NF_bare)
+  H4: W, p = wilcoxon_signed_rank(predict_NF, predict_NF_bare)
 
-Five tests. Report effect sizes and confidence intervals for all.
-Exploratory: per-lens Fleiss' kappa (mapping consistency check, not a hypothesis).
+Secondary (level of description):
+  H2: W, p = wilcoxon_signed_rank(fidelity_NF, fidelity_Shannon)
+  H5: z, p = steiger_test(rho_NF, rho_NF_bare, rho_Shannon, n=50)
+
+Report effect sizes and confidence intervals for all.
+Exploratory: per-condition Fleiss' kappa, NF-bare vs Shannon comparisons.
 ```
 
 ### Cross-Model Agreement
 
-Compare GPT-5.4 and Sonnet 4.5 mappings for each lens. If the models disagree (one favors NF, the other Shannon), the result is model-dependent.
+Compare GPT-5.4 and Sonnet 4.5 mappings for each condition. If the models disagree on the contracts test (one says contracts help, the other says they don't), the result is model-dependent.
 
 ### Exploratory Analyses (labeled as such)
 
-- Per-lens and per-role Fleiss' kappa (mapping consistency)
-- Per-source breakdown: does either lens spike on a particular data source?
+- Per-condition and per-role Fleiss' kappa (mapping consistency)
+- Per-source breakdown: does any condition spike on a particular data source?
+- NF-bare vs Shannon: are NF's labels alone better than Shannon's labels + theorems?
 - Role correspondence: which NF roles map to which Shannon roles on the same components?
-- Do the lenses agree on "unmapped" cases?
+- Do the conditions agree on "unmapped" cases?
+- Domain independence: Levene's test comparing cross-source variance across all three conditions
 
 ---
 
@@ -332,47 +350,44 @@ Compare GPT-5.4 and Sonnet 4.5 mappings for each lens. If the models disagree (o
 
 | Hypothesis | Prediction | Rationale |
 |-----------|-----------|-----------|
-| H1 (fidelity) | NF > Shannon | NF distinguishes Cache/Remember and Filter/Attend behaviorally. Shannon collapses these: Cache and Channel overlap; Filter has no analog. |
-| H2 (actionability) | NF > Shannon | "Filter's postcondition violated" points to a fix. "Channel capacity exceeded" names the limit, not the repair. |
-| H3 (prediction) | NF > Shannon | NF's handshake predicts ordering: earlier stages get built first. Shannon has no ordering prediction. |
-| H4 (health) | NF > Shannon | NF roles map to implementation concerns (buffering, filtering, persistence). Shannon roles map to communication architecture. Implementation gaps predict health more specifically. |
-| H5 (domain independence) | NF flatter | Shannon spikes on signal-processing-adjacent failures, drops on organizational post-mortems. NF's data-content contracts should perform uniformly. |
+| H1 (contracts: fidelity) | NF > NF-bare | "Filter's postcondition: failing items rejected" is more specific than "Filter: gate by criterion." The contract narrows the reconstruction. |
+| H2 (level: fidelity) | NF > Shannon | NF distinguishes Cache/Remember and Filter/Attend behaviorally. Shannon collapses these. But this comparison has the observability skew. |
+| H3 (contracts: actionability) | NF > NF-bare | "Postcondition violated" points to the fix. "This role broke" doesn't. |
+| H4 (contracts: prediction) | NF > NF-bare | The handshake (each postcondition enables the next precondition) predicts ordering. Definitions alone imply ordering but don't guarantee it. |
+| H5 (health) | NF > NF-bare > Shannon | Contracts help; NF vocabulary helps more than Shannon vocabulary. |
 
-### Discrete vs. Continuous Asymmetry
+### What H1 Actually Tests
 
-NF's contracts are binary predicates: a postcondition holds or it doesn't. Shannon's contracts are inequalities over continuous quantities (R ≥ H(X), R < C). This asymmetry cuts differently per source:
+H1 is the clean test. NF and NF-bare have identical roles, identical definitions, identical pipeline ordering. The only difference is the pre/postconditions. If NF > NF-bare, the Lean proof is load-bearing — those specific contracts carry information that the role labels don't. If NF-bare >= NF, the proof is ceremony.
 
-- **Sources 1-2 (bugs, post-mortems):** Something broke. "Which step failed?" (discrete) is a natural fit. Prediction: favors NF on H1 and H2 for these sources.
-- **Source 3 (ablation tables):** Performance degraded by a measured amount. "How far from the limit?" (continuous) is a natural fit. Prediction: Shannon may close the gap on H1 for ablation data.
-
-If NF wins on Sources 1-2 but Shannon wins on Source 3, the discrete/continuous distinction — not contract quality — may explain the difference.
+H2 (NF vs Shannon) has every confound: different roles, different contract types, discrete vs continuous, observability skew. H1 has none of these. H1 is the experiment; H2 is context.
 
 ### What Would Change Our Minds
 
 | Outcome | Implication |
 |---------|------------|
-| NF wins all five | Chemistry is more useful at the lab bench. Behavioral contracts are load-bearing for static analysis. |
-| NF wins H1, H2; loses H3 | Chemistry describes and diagnoses, but doesn't predict. The handshake is a verification tool, not a crystal ball. |
-| Shannon wins H1 | **The surprising result.** Physics-level descriptions are useful even without physics-level instruments. The LLM is inferring information-theoretic structure from code. |
-| Tie on H1, NF wins H3 | Same descriptive power, but the handshake predicts. The ordering theory is load-bearing; the role names are not. |
-| Tie on everything | Physics and chemistry describe the same structure. Two levels of description, same substance. NF's contribution is making the chemistry explicit. |
-| Shannon wins H5 | Physics is already domain-independent. The universal substrate was described in 1948. |
-| NF loses all five | Chemistry adds nothing over physics, even on chemistry's home turf. The Lean proof is a verbose restatement of Shannon. |
+| NF > NF-bare on H1, H3, H4 | **Contracts are load-bearing.** The Lean proof was necessary. Pre/postconditions carry information that role labels don't. |
+| NF = NF-bare, both > Shannon | **Vocabulary is load-bearing, contracts are not.** NF's six roles are better labels than Shannon's six roles. The Lean proof is ceremony, but the role decomposition is real. You need TypeScript, not Lean. |
+| NF = NF-bare = Shannon | **Everything is interchangeable.** Any well-defined 6-role taxonomy works equally well. The decomposition matters; the specific roles and contracts don't. |
+| NF > NF-bare, NF = Shannon | **Contracts help, but only to parity with Shannon.** Behavioral contracts bring NF up to Shannon's level. Without them, NF is worse. The Lean proof earns table stakes, not an advantage. |
+| NF-bare > Shannon | **NF's vocabulary alone beats Shannon.** The role definitions (perceive/cache/filter/attend/remember/consolidate) are more useful than (source/encoder/channel/noise/decoder/destination) even without contracts. |
+| Shannon > NF > NF-bare | **Physics beats chemistry beats labels.** Information-theoretic descriptions are most useful. Contracts help but not enough. |
+| Shannon > NF = NF-bare | **Physics beats chemistry. Contracts don't help.** The Lean proof is a verbose restatement of Shannon in dependent types. |
 
 ---
 
 ## Budget
 
-No human coders. Two lenses, ~4,700 CLI calls.
+No human coders. Three conditions, ~7,000 CLI calls.
 
 | Phase | Per unit | Units | Calls |
 |-------|----------|-------|-------|
-| Phases 2-5 | ~40 calls/data point | ~100 data points | ~4,000 |
-| Phase 6 | ~24 calls/repo | 5 repos | ~120 |
-| Phase 7 | ~12 calls/repo | 50 repos | ~600 |
-| **Total** | | | **~4,700** |
+| Phases 2-5 | ~60 calls/data point | ~100 data points | ~6,000 |
+| Phase 6 | ~36 calls/repo | 5 repos | ~180 |
+| Phase 7 | ~18 calls/repo | 50 repos | ~900 |
+| **Total** | | | **~7,100** |
 
-At ~10s per call: ~13 hours wall clock. Parallelizable across models.
+At ~10s per call: ~20 hours wall clock. Parallelizable across models and conditions.
 
 ---
 
@@ -411,7 +426,7 @@ data/
 {
   "datapoint_id": "stable-baselines3_issue_1234",
   "source": "rl_bugs",
-  "lens": "natural_framework",
+  "condition": "nf_with_contracts",
   "model": "gpt-5.4",
   "run": 1,
   "role_assigned": "Filter",
@@ -424,7 +439,7 @@ data/
 ### Commit policy
 
 - Enumeration: committed before any mapping begins.
-- Mappings: committed after each lens × model batch.
+- Mappings: committed after each condition × model batch.
 - Judgments: committed after each batch.
 - Append-only. No data is overwritten.
 
@@ -432,17 +447,17 @@ data/
 
 ## Limitations
 
-**Survivorship bias (H3, partially addressed by H4).** H3 uses the top 5 RL repos. H4 expands to 50 with natural health variance. Projects that died before gaining traction are absent.
+**Survivorship bias (H4).** Predictive validity uses the top 5 RL repos. H5 expands to 50 with natural health variance. Projects that died before gaining traction are absent.
 
-**Tech-domain bias.** All three sources are software/ML. Both frameworks claim broader generality.
+**Tech-domain bias.** All three sources are software/ML. All three conditions claim broader generality.
 
-**LLM bias.** Shannon appears far more in training data than NF. If fluency helps, Shannon has an unfair advantage. Cross-model comparison partially controls for this.
+**LLM bias.** Shannon appears far more in training data than NF. NF and NF-bare appear equally often (same role names). This biases H2 (NF vs Shannon) but not H1 (NF vs NF-bare).
 
-**Contract research asymmetry.** The researcher designed NF's contracts and researched Shannon's from textbooks. Mitigation: both rubrics are committed verbatim and auditable. [Shannon contract research →](lenses/shannon.md)
+**Observability skew (H2 only).** We have code (procedures), not data (streams). NF's contracts point at procedures; Shannon's point at data properties. This confounds H2 but not H1 — NF and NF-bare have the same observability.
 
-**Discrete/continuous confound.** NF's contracts are binary (postcondition holds or doesn't); Shannon's are continuous (inequalities over rates and capacities). Source 3 (ablation tables) reports continuous degradation, which may favor Shannon's contract type independent of framework quality. Per-source breakdown in exploratory analyses will test this.
+**Discrete/continuous confound (H2 only).** NF's contracts are binary; Shannon's are continuous. This confounds H2 but not H1 — NF and NF-bare have the same contract type (binary, or none).
 
-**Observability skew.** We have code (procedures), not data (streams). NF's contracts point at procedures; Shannon's point at data properties. An NF win may reflect this asymmetry rather than intrinsic framework quality. A fair Shannon test would use running systems with measurable information-theoretic quantities.
+**Contract research asymmetry (H2 only).** The researcher designed NF's contracts and researched Shannon's from textbooks. Does not affect H1. Mitigation: all rubrics committed verbatim. [Shannon contract research →](lenses/shannon.md)
 
 ---
 
@@ -455,4 +470,4 @@ data/
 
 ---
 
-*Shannon (1948) is the physics of information processing: laws about rate, capacity, and distortion. NF (2026) is the chemistry: what happens to the data at each step. Both have six roles and formal proofs. This study asks which level of description is more useful for diagnosing software systems from their artifacts.*
+*Three conditions: Shannon (physics), NF with contracts (chemistry), NF without contracts (labels only). The sharp test is NF vs NF-bare — do pre/postconditions help, or are the six role names enough? Shannon provides context: which level of description matches the instruments we have?*

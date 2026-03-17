@@ -244,6 +244,48 @@ For system failures, an additional reconstruction task:
 
 Judge scores the repair against the actual resolution (from the bug report or post-mortem) on the same 1-3 scale.
 
+### Phase 6: Predictive Validity (Source 1 repos only)
+
+For each of the 5 RL repos from Source 1, test whether each lens's diagnosis of an early state predicts what actually happened later in the git history.
+
+**Step 1: Snapshot.** For each repo, check out the earliest tagged release (or the commit at the 25th percentile of the repo's history if no tags exist). Record the commit hash.
+
+**Step 2: Diagnose.** For each lens, give the LLM the source code at the snapshot and ask:
+
+**Diagnosis prompt** (used verbatim):
+
+> Here is the source code of an information-processing system at an early stage of development:
+>
+> [source code inserted here]
+>
+> Here is a decomposition framework with [N] roles:
+>
+> [lens rubric inserted here]
+>
+> 1. For each role, is it present, partially implemented, or missing in this codebase?
+> 2. For each missing or partial role, predict what will happen if development continues: what will be added, what bugs will arise, and in what order?
+>
+> Be specific. Name files, functions, or behaviors.
+
+3 runs × 2 models × 8 lenses = 48 diagnosis calls per repo.
+
+**Step 3: Check against history.** For each prediction, a judge checks the subsequent git history (commits, issues, PRs) to score:
+
+**History judge prompt** (used verbatim):
+
+> Here is a prediction made about a software project based on its early source code:
+> [prediction]
+>
+> Here is what actually happened in the project's subsequent development:
+> [summary of commits/issues from snapshot to HEAD]
+>
+> Score the prediction:
+> - 3: The predicted change or bug actually occurred
+> - 2: Something related occurred but not exactly as predicted
+> - 1: The prediction did not materialize
+>
+> Return: {"score": N, "rationale": "one sentence"}
+
 ---
 
 ## Hypotheses
@@ -273,6 +315,18 @@ For system failures, NF role labels produce repair suggestions that match actual
 **Success criterion:** NF mean actionability > every other lens, p < 0.05 (Wilcoxon signed-rank).
 
 **Failure criterion:** No significant differences. The lens doesn't matter for diagnosis.
+
+### H4: Predictive Validity
+
+NF diagnoses of early-stage codebases produce predictions that match subsequent git history better than other lenses.
+
+**Metric:** Mean prediction score (1-3) per lens, across all predictions from all 5 repos.
+
+**Success criterion:** NF mean prediction score > every other lens, p < 0.05 (Wilcoxon signed-rank, paired by repo × prediction).
+
+**Failure criterion:** Any other lens scores >= NF. The decomposition does not predict development trajectory.
+
+**Note:** This is the strongest test. Fidelity (H1) measures how well a lens describes what exists. Predictive validity measures whether the lens tells you what's coming. A lens can be high-fidelity but not predictive. NF claims ordering constraints that other lenses don't — if those constraints predict the order of development, the theory is load-bearing.
 
 ---
 
@@ -331,9 +385,28 @@ For each lens pair (NF, other):
 └─ Report all pairwise comparisons
 ```
 
+### H4 Analysis
+
+```
+For each repo r and each lens L:
+  predictions(r, L) = list of scored predictions from Phase 6
+  mean_score(L) = mean across all repos and predictions
+
+For each lens pair (NF, other):
+  W, p = wilcoxon_signed_rank(scores_NF, scores_other)
+
+├─ NF > all others at p < 0.05?
+│   └─ CONFIRMED: NF predicts development trajectory best
+├─ NF > all 6-bin lenses but ties with MAPE-K?
+│   └─ PARTIAL: engineering lenses predict equally well
+├─ Another lens > NF?
+│   └─ DISCONFIRMED: NF's ordering constraints don't predict
+└─ Report per-repo results to check consistency
+```
+
 ### Multiple Comparisons
 
-Three hypotheses × seven pairwise tests = 21 primary tests. Apply Holm-Bonferroni correction. Report both corrected and uncorrected p-values.
+Four hypotheses × seven pairwise tests = 28 primary tests. Apply Holm-Bonferroni correction. Report both corrected and uncorrected p-values.
 
 ### Cross-Model Agreement
 
@@ -356,6 +429,7 @@ For each lens, compare GPT-5.4 and Sonnet mappings. If the two models disagree s
 | H1 (fidelity) | NF > Immune > Intelligence Cycle > F3EAD > Shannon > CRISP-DM > MAPE-K > VSM | NF distinguishes Cache/Remember and Filter/Attend. Immune Response is close because it has biological memory. Shannon has no feedback. VSM is organizational, not operational. |
 | H2 (consistency) | Shannon > CRISP-DM > NF > Intelligence Cycle > Immune > F3EAD > MAPE-K > VSM | Shannon's roles are mathematically crisp. NF's Filter/Attend boundary will cause splits. VSM's "System 3 vs 4" is notoriously ambiguous. |
 | H3 (actionability) | NF > MAPE-K > Intelligence Cycle > F3EAD > Immune > CRISP-DM > Shannon > VSM | "Filter is broken" tells you to fix the gate. "Channel has noise" tells you... to reduce noise? NF and MAPE-K roles map closest to implementation. |
+| H4 (prediction) | NF > MAPE-K > Immune > Intelligence Cycle > CRISP-DM > F3EAD > Shannon > VSM | NF predicts ordering (earlier stages get built first). MAPE-K predicts monitoring gaps. Immune predicts memory needs. Shannon has no ordering prediction. |
 
 ### What Would Change Our Minds
 
@@ -368,7 +442,9 @@ For each lens, compare GPT-5.4 and Sonnet mappings. If the two models disagree s
 | Shannon beats NF on H2 but loses H1 | Mathematical crispness aids consistency but not fidelity. Crisp categories can be consistently wrong. |
 | MAPE-K beats NF on H3 | An engineering-native vocabulary is more actionable than a theory-native one. |
 | All 6-bin lenses cluster together on H1 | The specific decomposition doesn't matter. Six bins with any reasonable definitions is enough. The proof is valid but the vocabulary is not load-bearing. |
-| NF loses all three | The six roles are a formal specification with no practical advantage. |
+| NF wins H4 but loses H1 | The ordering theory predicts, but the vocabulary doesn't describe. The proof's constraints are load-bearing; the role names are not. |
+| NF loses H4 | The ordering constraints don't predict development. The pipeline is a vocabulary, not a causal model. |
+| NF loses all four | The six roles are a formal specification with no practical advantage. |
 
 ---
 
@@ -376,11 +452,11 @@ For each lens, compare GPT-5.4 and Sonnet mappings. If the two models disagree s
 
 No human coders. Each trial is a CLI call.
 
-Per data point: 48 mapping calls + 48 reconstruction calls + 48 judge calls + 16 repair calls (Sources 1 & 2) = ~160 calls.
+**Phases 2-5** per data point: 48 mapping + 48 reconstruction + 48 judge + 16 repair (Sources 1 & 2) = ~160 calls. Estimated: ~100 data points = ~16,000 calls.
 
-Estimated dataset: ~100 data points. Total: ~16,000 CLI calls.
+**Phase 6** per repo: 48 diagnosis + ~48 history judge = ~96 calls. 5 repos = ~480 calls.
 
-At ~10s per call: ~44 hours wall clock. Parallelizable across models and lenses.
+**Total:** ~16,500 CLI calls. At ~10s per call: ~46 hours wall clock. Parallelizable across models and lenses.
 
 ---
 
@@ -432,6 +508,18 @@ data/
 - Mapping results: committed after each lens × model batch.
 - Judgments: committed after each batch.
 - No data is overwritten. Append-only.
+
+---
+
+## Limitations
+
+**Survivorship bias (H4).** The Source 1 repos are the top 5 RL frameworks by GitHub stars. They survived. Projects that died early — possibly because they were missing critical roles — aren't in the dataset. H4 can only test whether lenses predict the development trajectory of surviving projects, not whether missing roles predict death. The framework's strongest claim (breaking a role in a recursive loop compounds to extinction) is untestable here because dead repos don't accumulate stars.
+
+**Tech-domain bias (all hypotheses).** All three data sources are software/ML. The framework claims to apply to comedy, immune systems, law, and evolution. This study cannot evaluate cross-domain generality. A positive result means the framework works for tech systems. A negative result does not rule out value in other domains.
+
+**LLM bias (all hypotheses).** Both mapper models were trained on text that includes descriptions of all eight lenses. If one lens appears more frequently in training data, the model may apply it more fluently — an advantage that reflects training distribution, not lens quality. Cross-model comparison (GPT-5.4 vs Sonnet) partially controls for this, but both models share similar training corpora.
+
+**Rubric equivalence.** The rubrics are written to be equivalently detailed, but the researcher designed the NF rubric first and has more experience with it. Unconscious advantage in rubric quality could inflate NF scores. Mitigation: all rubrics use the same format (role table + decision criterion), and the LLM sees only the rubric, not the researcher's familiarity with it.
 
 ---
 

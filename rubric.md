@@ -157,11 +157,21 @@ Practice on these before coding real data. Discuss disagreements, clarify the ru
 
 - **Death condition:** Decaying input (the data distribution shifted — the model's training data no longer matches reality)
 
-### Example 5: Unmapped Case
+### Example 5: Substrate Destruction (Broken Step on Remember)
 
 > "The outage was caused by a network partition between data centers."
 
-- **Death condition:** `unmapped` — this is infrastructure, not a failure of any of the six roles within the application. The system's substrate broke, not a pipeline stage.
+- **Death condition:** Broken step. Remember is the persistent store, and the store IS the substrate. A network partition destroyed the system's ability to write to and read from its store. That's Remember failing — not an unmapped external event.
+- **Broken component role:** Remember (the partition severed access to the persistent store)
+
+### Example 6: Substrate Destruction (Catastrophic)
+
+> "The company was shut down after losing a government antitrust lawsuit.
+> All operations ceased within 90 days."
+
+- **Death condition:** Broken step. The company's substrate — legal standing, bank accounts, contracts — is what Remember writes to. The lawsuit destroyed the store. The pipeline was functional; the thing it persisted to no longer existed.
+- **Broken component role:** Remember (the substrate was removed)
+- **Note:** If the root cause was the company's own illegal behavior, trace further: the compliance process (Filter) broke first, which eventually caused the substrate to be destroyed. Code the root cause per the rubric: broken step on Filter.
 
 ---
 

@@ -273,6 +273,20 @@ NF role completeness correlates more strongly with project health (SourceRank) t
 
 **Power note:** n=50 repos detects Spearman's rho >= 0.28 at p < 0.05. If the true effect is smaller, this test is underpowered. Report the confidence interval regardless.
 
+### H6: Domain Independence
+
+NF has lower variance in fidelity scores across the three data sources (RL bugs, post-mortems, ablation tables) than any other lens.
+
+The claim is not that NF is flexible. The claim is that these domains are structurally self-similar — they are all information processing underneath — and NF captures that shared structure. A domain-specific lens (Shannon on signal processing, VSM on organizations) should spike on its home turf and drop elsewhere. A domain-independent lens should perform uniformly.
+
+**Test:** For each lens, compute mean fidelity per data source. Levene's test for equality of variances across sources, per lens. Compare variance profiles.
+
+**Success:** NF has the lowest cross-source variance among all lenses, and its mean fidelity is competitive (top 3). The self-similarity claim holds.
+
+**Failure:** Another lens has equally flat performance. The self-similarity is real but already captured by an existing framework. NF adds nothing.
+
+**The deeper failure:** Shannon shows flat variance. Information theory already describes the universal substrate. The Lean proof reinvented 1948.
+
 ---
 
 ## Analysis Plan
@@ -365,9 +379,29 @@ For each lens pair (NF, other):
 └─ Report all rho values with 95% CI
 ```
 
+### H6 Analysis
+
+```
+For each lens L:
+  mean_fidelity(L, source) = mean fidelity across data points in that source
+  variance_profile(L) = variance of mean_fidelity across 3 sources
+
+Levene's test per lens: are the three source-level distributions equal?
+
+├─ NF has lowest cross-source variance AND competitive mean?
+│   └─ CONFIRMED: NF captures cross-domain self-similarity
+├─ Another lens has equally flat performance?
+│   └─ DISCONFIRMED: self-similarity already captured elsewhere
+├─ All lenses with contracts show flat variance?
+│   └─ PARTIAL: contracts enable domain transfer; type doesn't matter
+├─ No lens is flat (all spike on home turf)?
+│   └─ NULL: domains aren't self-similar at this resolution
+└─ Report variance profile per lens with per-source means
+```
+
 ### Multiple Comparisons
 
-Five hypotheses × seven pairwise tests = 35 primary tests (H1-H4), plus 7 Steiger tests (H5) = 42 total. Holm-Bonferroni correction. Report both corrected and uncorrected p-values.
+Six hypotheses. H1-H4: seven pairwise tests each = 28. H5: 7 Steiger tests. H6: 7 pairwise variance comparisons = 42 primary tests total. Holm-Bonferroni correction. Report both corrected and uncorrected p-values.
 
 ### Cross-Model Agreement
 
@@ -376,10 +410,10 @@ For each lens, compare GPT-5.4 and Sonnet 4.5 mappings. If the two models disagr
 ### Exploratory Analyses (labeled as such)
 
 - Which NF role boundaries cause the most inconsistency? (per-role kappa)
-- Does fidelity vary by data source? (bug issues vs post-mortems vs ablations)
 - Do any lenses cluster? (if two lenses always agree, they're the same lens in practice)
 - Which lens produces the most "unmapped" cases?
 - Role correspondence matrix: which roles across lenses map to the same components?
+- Do lenses with stronger contracts consistently outperform those without? (contract strength as a predictor)
 
 ---
 
@@ -392,6 +426,7 @@ For each lens, compare GPT-5.4 and Sonnet 4.5 mappings. If the two models disagr
 | H3 (actionability) | NF > MAPE-K > Intel Cycle > F3EAD > Immune > CRISP-DM > Shannon > VSM | "Filter's postcondition is violated — items that should be rejected are reaching Attend" points to the fix. "Channel has noise" does not. |
 | H4 (prediction) | NF > MAPE-K > Immune > Intel Cycle > CRISP-DM > F3EAD > Shannon > VSM | The handshake predicts ordering: earlier stages get built first because downstream stages can't fire without their preconditions met. No other lens makes this claim. |
 | H5 (health) | NF > MAPE-K > VSM > Intel Cycle > Immune > CRISP-DM > F3EAD > Shannon | NF and MAPE-K roles map to implementation concerns that affect health. VSM was designed to diagnose organizational viability. |
+| H6 (domain independence) | NF flattest, then Immune, then Shannon. VSM spikes on post-mortems, CRISP-DM spikes on ablations | NF and Immune are domain-general by design. Shannon is domain-general but a poor fit for non-communication systems. VSM is organizational. CRISP-DM is data science. |
 
 ### What Would Change Our Minds
 
@@ -405,7 +440,8 @@ For each lens, compare GPT-5.4 and Sonnet 4.5 mappings. If the two models disagr
 | Immune ties NF on H1 | Molecular-level contracts are equally high-fidelity. NF and Immune may be the same lens at different abstraction levels. |
 | Shannon beats NF on H1 | Information-theoretic contracts are more useful than behavioral ones. Mathematical rigor > domain specificity. |
 | All 6-bin lenses cluster on H1, but NF separates on H4 | The best possible outcome for the theory. Six bins is the right number (any vocabulary works for description), but the contracts predict what labels can't. |
-| NF loses all five | The six roles are a formal specification with no practical advantage. |
+| Shannon shows flat variance on H6 | Information theory already describes the universal substrate. The Lean proof reinvented 1948. |
+| NF loses all six | The six roles are a formal specification with no practical advantage. |
 
 ---
 

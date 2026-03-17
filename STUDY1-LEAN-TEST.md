@@ -22,9 +22,9 @@
 
 The Natural Framework (NF) decomposes information-processing systems into six roles with formal pre/postconditions proven in Lean 4. Each postcondition guarantees the next precondition — the contracts *compose*.
 
-This study asks whether that composition carries information. NF's six roles can be stated three ways: with correct contracts (Lean-proven), with wrong contracts (same text, shuffled), or with no contracts (labels only). If correct contracts outperform scrambled ones at the same token count, the Lean proof is load-bearing. If scrambled contracts outperform bare labels, even wrong contract text helps. If all three perform equally, the role names carry all the information and the proof is ceremony.
+This study asks whether composable contract text carries information when used as prompt context for LLM-based decomposition. NF's six roles can be stated three ways: with composable contracts, with shuffled contracts (same text, wrong assignment), or with no contracts (labels only). If composable contracts outperform shuffled ones at the same token count, the specific arrangement matters. If shuffled contracts outperform bare labels, even misassigned contract text helps. If all three perform equally, the role names carry all the information.
 
-This is an LLM-evaluation study. It tests whether contract text improves LLM-mediated decomposition of software artifacts, not whether formal proofs are necessary in general.
+This is an LLM-evaluation study. It tests whether composable contract text improves LLM-mediated decomposition of software artifacts. It does not test whether Lean proofs are necessary for software engineering, whether these contracts are correct descriptions of real systems, or whether the framework generalizes beyond this task.
 
 ---
 
@@ -112,6 +112,20 @@ RL repos have explicit perceive/act/learn loops where NF roles are architectural
 
 **Rows:** Every row that removes or disables a named component.
 
+### Extraction Protocol
+
+**Unit of analysis:** One component or failure per data point.
+
+**Source 1 extraction:** For each qualifying issue, extract the first message's description of the bug. If the issue describes multiple independent bugs, take only the first. The data point text is the issue title + first paragraph of the issue body. Exclude issues where the bug is "feature request mislabeled as bug" or "documentation error."
+
+**Source 2 extraction:** For each post-mortem, extract the root cause section (or equivalent). If the post-mortem describes a cascade of failures, take the initiating failure only. The data point text is the root cause description, max 200 words. Exclude post-mortems with no identifiable software component (e.g., "human operator error" with no system context).
+
+**Source 3 extraction:** For each ablation row, extract the component name and its description from the paper's method section. The data point text is: "[component name]: [description from paper]." If the paper doesn't describe the component beyond naming it, exclude that row.
+
+**Deduplication:** If the same component appears in multiple issues or rows, keep the first occurrence in enumeration order.
+
+**Ambiguous cases:** If unsure whether a data point qualifies, include it. The sequential design tolerates noise; exclusion introduces researcher discretion.
+
 ---
 
 ## Procedure
@@ -144,6 +158,11 @@ For each data point and each condition:
 **Token counts:** Record and report token counts for each condition's rubric. NF and NF-scrambled must be within 5% of each other.
 
 **Unmapped items:** Fidelity score = 0. Excluded from actionability. Included in fidelity analysis.
+
+**Mapping outcomes (pre-registered, reported before fidelity):**
+- Unmapped rate per condition. If one condition produces significantly more "unmapped" responses, it's harder to use, independent of fidelity.
+- Role assignment distribution per condition. Chi-squared test for uniformity.
+- Cross-condition agreement: for data points mapped by all three conditions, do NF and NF-scrambled assign the same role? (They share definitions, so disagreement indicates contract text influences mapping, not just reconstruction.)
 
 ### Phase 3: Reconstruction
 
@@ -194,45 +213,52 @@ Judge model scores reconstruction fidelity, blind to condition identity ("Lens A
 >
 > Based only on this label, definition, and contract violation, write one sentence suggesting how to fix the system.
 
-Judge scores the repair against the actual resolution on the same 1-3 scale.
+Judge scores the repair on a 1-3 scale:
+
+> Score this repair suggestion:
+> - 3: Addresses the root cause of the failure
+> - 2: Plausible mitigation but doesn't address root cause
+> - 1: Irrelevant or would not help
+>
+> The actual resolution was: [actual resolution]
+> Does the suggestion match? {"score": N, "matches_actual": true/false, "rationale": "one sentence"}
+
+This separates plausibility (the 1-3 score) from historical match (the boolean). A good suggestion that differs from the actual fix still scores 3.
 
 ---
 
 ## Hypotheses
 
-Three questions, tested sequentially with Bayesian updating.
+Two hypotheses tested sequentially with Bayesian updating. One exploratory comparison.
 
-### H1: Does Composition Matter?
+### H1: Does Composable Contract Text Improve Fidelity? (primary)
 
 NF produces higher reconstruction scores than NF-scrambled.
 
-**Prior:** Uniform. No prior belief about effect direction or size.
+**Statistical model:** For each data point, compute d = score(NF) - score(NF_scrambled). Scores are ordinal {1, 2, 3}; differences are in {-2, -1, 0, 1, 2}. Classify each d as positive (d > 0), negative (d < 0), or tied (d = 0). Ties are excluded from the sign test (reported separately as tie rate).
 
-**Evidence metric:** Bayes factor (BF₁₀) computed via paired Bayesian sign test after each data point.
+Let k = number of positive signs out of n_nontied observations. Under H₀, k ~ Binomial(n_nontied, 0.5). Under H₁, k ~ Binomial(n_nontied, θ) with θ ~ Beta(1, 1) prior (uniform on [0, 1]).
+
+BF₁₀ = P(data | H₁) / P(data | H₀) = [B(k+1, n_nontied-k+1) × 2^n_nontied] / 1, where B is the beta function.
 
 **Decision rule:**
-- BF₁₀ > 10: **Stop. Strong evidence composition helps.** The Lean proof guarantees something real.
-- BF₁₀ < 0.1: **Stop. Strong evidence composition doesn't matter.** The proof is ceremony.
+- BF₁₀ > 10: **Stop. Strong evidence composable contracts improve fidelity** for this model on these data.
+- BF₁₀ < 0.1: **Stop. Strong evidence composability doesn't matter** for this task.
 - 0.1 ≤ BF₁₀ ≤ 10: **Continue.** Inconclusive.
 
-**Minimum sample:** 10 data points before first check (posterior needs mass to stabilize).
+**Minimum sample:** 10 data points before first check.
 
-**Maximum sample:** All qualifying data points. If still inconclusive after exhausting the dataset, report the final BF and posterior.
+**Maximum sample:** All qualifying data points. If still inconclusive after exhausting the dataset, report the final BF, posterior on θ, and tie rate.
 
-### H2: Does Contract Text Help?
+### H2: Does Composable Contract Text Improve Diagnosis? (secondary)
 
-NF-scrambled produces higher reconstruction scores than NF-bare.
+NF produces repair suggestions closer to actual resolutions than NF-scrambled.
 
-**Same sequential procedure.** Runs in parallel with H1 on the same data points.
+**Same statistical model** applied to actionability scores. Only runs on Sources 1 and 2 data points that describe failures. **Runs independently of H1** — H2 continues regardless of H1's outcome, on its own data point stream (failures only, in the same pre-randomized order).
 
-- BF₁₀ > 10: Even wrong contracts help.
-- BF₁₀ < 0.1: Contract text without correctness is noise.
+### Exploratory: Does Contract Text Help At All?
 
-### H3: Does Composition Help Diagnosis?
-
-NF produces repair suggestions that match actual resolutions better than NF-scrambled.
-
-**Same sequential procedure.** Only runs on Sources 1 and 2 data points that describe failures.
+NF-scrambled vs NF-bare. Same sequential procedure but **no stopping rule** — runs on all data points processed for H1. Reported as exploratory because the comparison is confounded by prompt length. A positive result means "adding this contract text changes performance," not "contracts help."
 
 ---
 
@@ -241,29 +267,36 @@ NF produces repair suggestions that match actual resolutions better than NF-scra
 ```
 For each data point d (in pre-randomized order):
   score(d, C) = median fidelity across 3 runs for condition C
-  diff(d) = score(d, NF) - score(d, NF_scrambled)
+  diff_H1(d) = score(d, NF) - score(d, NF_scrambled)
+  diff_expl(d) = score(d, NF_scrambled) - score(d, NF_bare)
 
 After each data point (n >= 10):
-  Compute BF₁₀ for H1 using Bayesian sign test on diff vector
-  Compute BF₁₀ for H2 using Bayesian sign test on
-    score(NF_scrambled) - score(NF_bare)
-  Log BF, n, and posterior to sequential_log.csv
-  If BF₁₀ > 10 or BF₁₀ < 0.1 for H1: stop fidelity pipeline
-  If both H1 and H2 have stopped: stop all fidelity processing
+  Exclude ties (diff = 0) from sign count.
+  k = count(diff > 0), m = count(diff != 0)
+  BF₁₀ = Beta(k+1, m-k+1) * 2^m  (Bayesian sign test)
 
-H3 runs the same procedure on actionability scores,
-independent stopping criterion.
+  Log: n, n_nontied, k, BF₁₀, posterior_mean(θ), tie_rate
+  to sequential_log.csv
 
-Report:
-  - Final BF₁₀ and posterior for each hypothesis
-  - Sequential plot: BF₁₀ vs n for each hypothesis
-  - Effect size (median paired difference) with 95% HDI
+  If BF₁₀ > 10 or BF₁₀ < 0.1 for H1: stop fidelity pipeline.
+  H2 continues independently on failure data points.
+
+Report per hypothesis:
+  - Final BF₁₀, posterior on θ, tie rate
+  - Sequential plot: BF₁₀ vs n
+  - Effect size: median paired difference with 95% HDI
+  - Source-specific BF (per-source breakdown, see below)
 ```
+
+### Pre-registered analyses (not hypotheses)
+
+- **Mapping outcomes:** Unmapped rate, role distribution, cross-condition agreement (reported before fidelity)
+- **Per-source BF:** Compute H1's BF separately for each source. If the effect is driven by one source, the pooled result is misleading.
 
 ### Exploratory (labeled as such)
 
+- NF-scrambled vs NF-bare (confounded by prompt length)
 - Per-condition Fleiss' kappa
-- Per-source breakdown
 - NF vs NF-bare (combines composition + text effects)
 - Per-role fidelity scores
 
@@ -273,19 +306,18 @@ Report:
 
 | Hypothesis | Prediction | Rationale |
 |-----------|-----------|-----------|
-| H1 (composition) | BF₁₀ > 10 by n ≈ 20-30 | Composable contracts narrow reconstruction. "Filter's postcondition enables Attend's precondition" carries structural information that shuffled contracts don't. |
-| H2 (text) | BF₁₀ near 1 | Wrong contracts might help slightly (more text) or hurt (misleading). Unclear direction. |
-| H3 (diagnosis) | BF₁₀ > 10 | Correct postcondition violations point to real fixes. Wrong ones point to wrong fixes. |
+| H1 (fidelity) | BF₁₀ > 10 by n ≈ 20-30 | Composable contracts narrow reconstruction. "Filter's postcondition enables Attend's precondition" carries structural information that shuffled contracts don't. |
+| H2 (diagnosis) | BF₁₀ > 10 | Composable contract violations point to specific fixes. Shuffled violations point to wrong fixes. |
+| Exploratory (text) | BF₁₀ near 1 | Wrong contracts might help slightly (more text) or hurt (misleading). Unclear direction, confounded by length. |
 
 ### What Would Change Our Minds
 
 | Outcome | Implication |
 |---------|------------|
-| H1: BF > 10, H2: BF > 10 | **Composition matters, and text helps.** The proof guarantees something real. Even wrong contracts add value over bare labels. |
-| H1: BF > 10, H2: BF < 0.1 | **Composition matters, text alone doesn't.** Only correct contracts help. Wrong contracts are noise. The proof is the whole story. |
-| H1: BF < 0.1, H2: BF > 10 | **Text helps, composition doesn't.** Any plausible contracts work. The proof is ceremony — more prompt text is what helps. |
-| H1: BF < 0.1, H2: BF < 0.1 | **Neither text nor composition helps.** The role labels carry all the information. Contracts are irrelevant. |
-| H1: inconclusive after all data | **Effect is small or absent.** Report posterior and move on. |
+| H1: BF > 10 | **Composable contract text improves LLM fidelity** on this task. Consistent with the Lean proof capturing real structure, but does not prove it — the proof may have helped write better text, or the composition pattern may be independently useful as prompt context. |
+| H1: BF < 0.1 | **Composable contract text does not improve LLM fidelity** on this task. The role definitions already carry the information. Adding pre/postconditions — even correctly composed ones — doesn't help the LLM reconstruct component descriptions. |
+| H1: BF > 10, H2: BF < 0.1 | **Composition helps fidelity but not diagnosis.** The contracts carry information about what things are, not about how to fix them. |
+| H1: inconclusive | **Effect is small or absent.** Report posterior and move on. The role definitions may be so semantically rich that contracts add only marginal information — too small to detect at this sample size. |
 
 ---
 
@@ -352,11 +384,13 @@ data/
 
 **Tech-domain bias.** All sources are software/ML. The framework claims broader generality.
 
-**LLM bias.** NF, NF-scrambled, and NF-bare use the same role names and appear equally often in training data. No condition is favored by training data familiarity.
+**LLM bias.** All three conditions share the same role names, reducing one obvious familiarity confound. Actual training data exposure is unknown.
 
 **Home turf.** RL repos have perceive/act/learn loops that map naturally to NF vocabulary. All three conditions share the same vocabulary, so this doesn't bias H1.
 
 **Researcher designed the rubrics.** The treatment is literally text shown to LLMs. Wording choices could favor NF. Mitigation: all rubrics committed verbatim; NF-scrambled uses the exact same text, just reassigned.
+
+**Definitions may carry most of the signal.** The role names and definitions are semantically rich ("Remember: write to persistent storage" already implies persistence without any contract). If definitions dominate, the test is underpowered — contracts add marginal information on top of a strong baseline. A null result on H1 would be ambiguous: composition might matter but be undetectable over the definitions' signal.
 
 **Sequential stopping.** Optional stopping with Bayesian analysis is principled (the likelihood principle guarantees valid inference regardless of stopping rule), but early stopping on small samples can give imprecise effect size estimates. We report the full posterior, not just the decision.
 
@@ -373,4 +407,4 @@ data/
 
 ---
 
-*Three conditions. One question: does composition matter? NF vs NF-scrambled at the same token count. Bayesian sequential testing — stop when the evidence is clear. That's the Lean test.*
+*Three conditions. One question: does composable contract text improve LLM-based decomposition? NF vs NF-scrambled at the same token count. Bayesian sequential testing — stop when the evidence is clear.*

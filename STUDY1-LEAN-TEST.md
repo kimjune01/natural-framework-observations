@@ -116,15 +116,17 @@ RL repos have explicit perceive/act/learn loops where NF roles are architectural
 
 ## Procedure
 
+Single model: GPT-5.4 via codex CLI. Cross-model replication left to future work.
+
 ### Phase 1: Data Enumeration
 
-Run all queries mechanically. Commit raw results before any mapping begins.
+Run all queries mechanically. Commit raw results before any mapping begins. Randomize data point order before Phase 2 — this is the processing order for sequential analysis.
 
 ### Phase 2: Mapping
 
 For each data point and each condition:
 
-**Mapper prompt** (used verbatim for each model × condition × data point):
+**Mapper prompt** (used verbatim for each run × condition × data point):
 
 > Here is a component or failure description from a real system:
 >
@@ -137,7 +139,7 @@ For each data point and each condition:
 > 1. Which role does this component best fit? Pick exactly one, or say "unmapped" if none fit.
 > 2. In one sentence, what does a component with this role label typically do?
 
-3 runs × 2 models × 3 conditions = 18 mapping calls per data point.
+3 runs × 1 model × 3 conditions = 9 mapping calls per data point.
 
 **Token counts:** Record and report token counts for each condition's rubric. NF and NF-scrambled must be within 5% of each other.
 
@@ -176,7 +178,7 @@ Judge model scores reconstruction fidelity, blind to condition identity ("Lens A
 >
 > Return: {"score": N, "rationale": "one sentence"}
 
-3 runs per judge model, majority vote. GPT-5.4 and Sonnet 4.5 judge independently.
+3 judge runs per reconstruction. Majority vote.
 
 **Human validation subset:** 20 data points, stratified random sample (balanced across sources). Two human raters score the same reconstructions on the same 1-3 rubric, blind to condition. Report human-human Cohen's κ and human-LLM agreement. If human-LLM κ < 0.4, results are suspect.
 
@@ -198,59 +200,65 @@ Judge scores the repair against the actual resolution on the same 1-3 scale.
 
 ## Hypotheses
 
-One primary hypothesis, two secondary.
+Three questions, tested sequentially with Bayesian updating.
 
-### H1: Does Composition Matter? (primary)
+### H1: Does Composition Matter?
 
 NF produces higher reconstruction scores than NF-scrambled.
 
-**Test:** Wilcoxon signed-rank, paired by data point. α = 0.05.
+**Prior:** Uniform. No prior belief about effect direction or size.
 
-**Success:** NF > NF-scrambled, p < 0.05. Composable contracts carry more information than shuffled ones. The Lean proof guarantees something real.
+**Evidence metric:** Bayes factor (BF₁₀) computed via paired Bayesian sign test after each data point.
 
-**Failure:** NF-scrambled >= NF. Composition doesn't matter. Any plausible-sounding contracts work equally well.
+**Decision rule:**
+- BF₁₀ > 10: **Stop. Strong evidence composition helps.** The Lean proof guarantees something real.
+- BF₁₀ < 0.1: **Stop. Strong evidence composition doesn't matter.** The proof is ceremony.
+- 0.1 ≤ BF₁₀ ≤ 10: **Continue.** Inconclusive.
 
-### H2: Does Contract Text Help? (secondary)
+**Minimum sample:** 10 data points before first check (posterior needs mass to stabilize).
+
+**Maximum sample:** All qualifying data points. If still inconclusive after exhausting the dataset, report the final BF and posterior.
+
+### H2: Does Contract Text Help?
 
 NF-scrambled produces higher reconstruction scores than NF-bare.
 
-**Test:** Wilcoxon signed-rank, paired by data point. Holm-Bonferroni corrected (2 secondary tests, α_adj = 0.025).
+**Same sequential procedure.** Runs in parallel with H1 on the same data points.
 
-**Success:** NF-scrambled > NF-bare, adjusted p < 0.025. Even wrong contracts help — extra descriptive text carries information.
+- BF₁₀ > 10: Even wrong contracts help.
+- BF₁₀ < 0.1: Contract text without correctness is noise.
 
-**Failure:** NF-bare >= NF-scrambled. Contract text without correctness is noise.
-
-### H3: Does Composition Help Diagnosis? (secondary)
+### H3: Does Composition Help Diagnosis?
 
 NF produces repair suggestions that match actual resolutions better than NF-scrambled.
 
-**Test:** Wilcoxon signed-rank, paired by failure. Holm-Bonferroni corrected (α_adj = 0.025).
-
-**Success:** NF > NF-scrambled, adjusted p < 0.025. Correct contract violations point to fixes.
-
-**Failure:** NF-scrambled >= NF. Any contract violation framing works.
+**Same sequential procedure.** Only runs on Sources 1 and 2 data points that describe failures.
 
 ---
 
 ## Analysis Plan
 
 ```
-Unit of analysis: the data point. Each data point gets one score per
-condition = median across 3 runs × 2 models. N = unique data points.
+For each data point d (in pre-randomized order):
+  score(d, C) = median fidelity across 3 runs for condition C
+  diff(d) = score(d, NF) - score(d, NF_scrambled)
 
-Primary (α = 0.05):
-  H1: W, p = wilcoxon_signed_rank(fidelity_NF, fidelity_NF_scrambled)
+After each data point (n >= 10):
+  Compute BF₁₀ for H1 using Bayesian sign test on diff vector
+  Compute BF₁₀ for H2 using Bayesian sign test on
+    score(NF_scrambled) - score(NF_bare)
+  Log BF, n, and posterior to sequential_log.csv
+  If BF₁₀ > 10 or BF₁₀ < 0.1 for H1: stop fidelity pipeline
+  If both H1 and H2 have stopped: stop all fidelity processing
 
-Secondary (Holm-Bonferroni, 2 tests):
-  H2: W, p = wilcoxon_signed_rank(fidelity_NF_scrambled, fidelity_NF_bare)
-  H3: W, p = wilcoxon_signed_rank(action_NF, action_NF_scrambled)
+H3 runs the same procedure on actionability scores,
+independent stopping criterion.
 
-Report effect sizes (rank-biserial r) and 95% CIs for all.
+Report:
+  - Final BF₁₀ and posterior for each hypothesis
+  - Sequential plot: BF₁₀ vs n for each hypothesis
+  - Effect size (median paired difference) with 95% HDI
 ```
-
-### Cross-Model Agreement
-
-Compare GPT-5.4 and Sonnet 4.5 results per condition. If the models disagree on H1, the result is model-dependent.
 
 ### Exploratory (labeled as such)
 
@@ -265,43 +273,48 @@ Compare GPT-5.4 and Sonnet 4.5 results per condition. If the models disagree on 
 
 | Hypothesis | Prediction | Rationale |
 |-----------|-----------|-----------|
-| H1 (composition) | NF > NF-scrambled | Composable contracts narrow reconstruction. "Filter's postcondition enables Attend's precondition" carries structural information that shuffled contracts don't. |
-| H2 (text) | NF-scrambled > NF-bare | Even wrong contracts add descriptive text. But if NF-scrambled ≈ NF-bare, contract text is noise without correctness. |
-| H3 (diagnosis) | NF > NF-scrambled | Correct postcondition violations point to real fixes. Wrong ones point to wrong fixes. |
+| H1 (composition) | BF₁₀ > 10 by n ≈ 20-30 | Composable contracts narrow reconstruction. "Filter's postcondition enables Attend's precondition" carries structural information that shuffled contracts don't. |
+| H2 (text) | BF₁₀ near 1 | Wrong contracts might help slightly (more text) or hurt (misleading). Unclear direction. |
+| H3 (diagnosis) | BF₁₀ > 10 | Correct postcondition violations point to real fixes. Wrong ones point to wrong fixes. |
 
 ### What Would Change Our Minds
 
 | Outcome | Implication |
 |---------|------------|
-| NF > NF-scrambled > NF-bare | **Composition matters, and text helps.** The proof guarantees something real. Even wrong contracts add value over bare labels. |
-| NF > NF-scrambled ≈ NF-bare | **Composition matters, text alone doesn't.** Only correct contracts help. Wrong contracts are noise. The proof is the whole story. |
-| NF ≈ NF-scrambled > NF-bare | **Text helps, composition doesn't.** Any plausible contracts work. The proof is ceremony — more prompt text is what helps. |
-| NF ≈ NF-scrambled ≈ NF-bare | **Neither text nor composition helps.** The role labels carry all the information. Contracts are irrelevant. |
+| H1: BF > 10, H2: BF > 10 | **Composition matters, and text helps.** The proof guarantees something real. Even wrong contracts add value over bare labels. |
+| H1: BF > 10, H2: BF < 0.1 | **Composition matters, text alone doesn't.** Only correct contracts help. Wrong contracts are noise. The proof is the whole story. |
+| H1: BF < 0.1, H2: BF > 10 | **Text helps, composition doesn't.** Any plausible contracts work. The proof is ceremony — more prompt text is what helps. |
+| H1: BF < 0.1, H2: BF < 0.1 | **Neither text nor composition helps.** The role labels carry all the information. Contracts are irrelevant. |
+| H1: inconclusive after all data | **Effect is small or absent.** Report posterior and move on. |
 
 ---
 
 ## Budget
 
-Three conditions, ~5,400 CLI calls.
+Single model, sequential stopping. Worst case (inconclusive, run everything):
 
-| Phase | Per unit | Units | Calls |
-|-------|----------|-------|-------|
-| Phases 2-4 | ~45 calls/data point | ~100 data points | ~4,500 |
-| Phase 5 | ~9 calls/failure | ~100 failures | ~900 |
-| **Total** | | | **~5,400** |
+| Phase | Per data point | Max data points | Max calls |
+|-------|---------------|----------------|-----------|
+| Phases 2-4 (fidelity) | 27 calls | ~100 | ~2,700 |
+| Phase 5 (actionability) | 9 calls | ~100 | ~900 |
+| **Total** | | | **~3,600** |
 
-At ~10s per call: ~15 hours wall clock. Parallelizable across models and conditions.
+**Expected case:** If composition effect is large, H1 stops at n ≈ 20-30. That's ~540-810 fidelity calls. H3 (actionability) continues on failure data points only.
+
+At ~15s per codex CLI call: worst case ~15 hours, expected case ~3-4 hours.
 
 ---
 
 ## Stopping Rules
 
-Fixed dataset. Map everything that qualifies. No adaptive stopping.
+**Sequential Bayesian stopping.** Process data points in pre-randomized order. Check BF after each point (n >= 10). Stop when BF₁₀ > 10 or BF₁₀ < 0.1, or when data is exhausted.
 
-**Minimum viable dataset:**
+**Minimum viable dataset** (for enumeration, before sequential processing begins):
 - Source 1 (bugs): >= 20 qualifying bug issues
 - Source 2: >= 30 qualifying post-mortems
 - Source 3: >= 50 ablation rows
+
+If total qualifying data points < 30, the study is underpowered. Report descriptive statistics only.
 
 ---
 
@@ -310,26 +323,30 @@ Fixed dataset. Map everything that qualifies. No adaptive stopping.
 ```
 data/
 ├── enumeration/          # Raw query results, committed before mapping
-├── mappings/             # {datapoint}_{condition}_{model}_{run}.json
-├── reconstructions/      # {datapoint}_{condition}_{model}_{run}_recon.json
-├── judgments/            # {datapoint}_{condition}_{model}_{run}_judge{1,2,3}.json
-├── repairs/              # {datapoint}_{condition}_{model}_{run}_repair.json
+├── processing_order.csv  # Pre-randomized order, committed before Phase 2
+├── mappings/             # {datapoint}_{condition}_{run}.json
+├── reconstructions/      # {datapoint}_{condition}_{run}_recon.json
+├── judgments/            # {datapoint}_{condition}_{run}_judge{1,2,3}.json
+├── repairs/              # {datapoint}_{condition}_{run}_repair.json
+├── sequential_log.csv    # BF, n, posterior after each data point
 ├── scores/               # Aggregated scores per data point per condition
 └── analysis/             # Final results, plots
 ```
 
 ### Commit policy
 
-- Enumeration: committed before any mapping begins.
-- Mappings: committed after each condition × model batch.
-- Judgments: committed after each batch.
-- Append-only. No data is overwritten.
+- Enumeration + processing order: committed before any mapping begins.
+- Mappings: committed after each data point (append-only).
+- Sequential log: committed after each BF update.
+- No data is overwritten.
 
 ---
 
 ## Limitations
 
 **This is an LLM-evaluation study.** It tests whether contract text improves LLM-mediated decomposition of software artifacts. It does not test whether Lean proofs are necessary for software engineering in general.
+
+**Single model.** GPT-5.4 only. If the result is model-specific, we won't know. Cross-model replication is future work.
 
 **Token-count confound (H2 only).** H1 (NF vs NF-scrambled) is length-controlled. H2 (NF-scrambled vs NF-bare) is not. If NF-scrambled > NF-bare, the win might be more tokens.
 
@@ -341,15 +358,19 @@ data/
 
 **Researcher designed the rubrics.** The treatment is literally text shown to LLMs. Wording choices could favor NF. Mitigation: all rubrics committed verbatim; NF-scrambled uses the exact same text, just reassigned.
 
+**Sequential stopping.** Optional stopping with Bayesian analysis is principled (the likelihood principle guarantees valid inference regardless of stopping rule), but early stopping on small samples can give imprecise effect size estimates. We report the full posterior, not just the decision.
+
 ---
 
 ## Transparency
 
 - All prompts committed verbatim before Phase 2.
+- Processing order randomized and committed before Phase 2.
 - Condition labels anonymized during judging ("Lens A"/"Lens B"/"Lens C").
+- Sequential log published after each data point.
 - All raw data published as JSON/CSV.
 - Timestamped by commit. No amendments after Phase 2 without a dated commit.
 
 ---
 
-*Three conditions. One question: does composition matter? NF vs NF-scrambled at the same token count. That's the Lean test.*
+*Three conditions. One question: does composition matter? NF vs NF-scrambled at the same token count. Bayesian sequential testing — stop when the evidence is clear. That's the Lean test.*

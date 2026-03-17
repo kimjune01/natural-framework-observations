@@ -20,7 +20,9 @@
 
 Multiple frameworks decompose information-processing systems into named roles. Each is a lens that compresses a system description into role labels. A high-fidelity lens lets you reconstruct what a component does from its label alone. A low-fidelity lens loses the signal.
 
-To control for granularity (more bins = more bits by construction), we compare lenses at matched bin counts: 5-6 bins. If the Natural Framework beats other 6-bin lenses, the advantage is the decomposition, not the resolution.
+Any framework can chain stages into a pipeline — that's just type-compatible composition, expressible in any language. The Natural Framework additionally specifies behavioral contracts: pre/postconditions at each role transition, where each role's postcondition guarantees what the next role's precondition requires. These contracts required a proof assistant (Lean 4) because they make claims about data content, not just data shape. This study tests whether those contracts buy empirical fidelity over plain role labels.
+
+To control for granularity (more bins = more bits by construction), we compare lenses at matched bin counts: 5-6 bins. If the Natural Framework beats other 6-bin lenses, the advantage is the contracts, not the resolution.
 
 ---
 

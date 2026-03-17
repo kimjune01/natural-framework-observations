@@ -47,15 +47,21 @@ Full role definitions and decision criteria: [`rubric.md`](rubric.md).
 
 All pre-specified and mechanically enumerable.
 
-### Source 1: RL Framework Bug Issues
+### Source 1: RL Framework Repos
 
-**Repos:** Top 5 RL frameworks by GitHub stars:
+**Repos:** Top 50 RL frameworks by GitHub stars:
 
 ```
-gh search repos "reinforcement learning" --language=python --sort=stars --limit=5
+gh search repos "reinforcement learning" --language=python --sort=stars --limit=50
 ```
 
-**Issues:** Closed, labeled "bug", >= 10 comments, created 2022-2025.
+RL repos are the strongest test case: they have explicit perceive/act/learn loops where all six NF roles are architecturally visible. If a lens diagnoses complex pipelines well, simpler systems follow. The reverse doesn't hold.
+
+**Bug issues (Phases 2-5):** Closed, labeled "bug", >= 10 comments, created 2022-2025. From all 50 repos (most qualifying issues will come from the top ~10).
+
+**Predictive validity (Phase 6):** Top 5 repos only (richest commit history).
+
+**Health correlation (Phase 7):** All 50 repos. Sorting by stars gives a natural range of project health — the top repos are thriving, the tail is declining or stalled. Health measured by [Libraries.io SourceRank](https://docs.libraries.io/overview.html#sourcerank), a pre-existing composite score combining stars, contributors, releases, dependents, and maintenance signals. We use SourceRank as-is; modeling project health is not our contribution.
 
 ### Source 2: Public Post-Mortems
 
@@ -168,7 +174,7 @@ For each of the 5 RL repos, test whether each lens's diagnosis of an early state
 >
 > Be specific. Name files, functions, or behaviors.
 
-3 runs × 2 models × 8 lenses = 48 diagnosis calls per repo.
+3 runs × 2 models × 8 lenses = 48 diagnosis calls per repo. Top 5 repos only.
 
 **Step 3: Check against history.**
 
@@ -186,6 +192,18 @@ For each of the 5 RL repos, test whether each lens's diagnosis of an early state
 > - 1: The prediction did not materialize
 >
 > Return: {"score": N, "rationale": "one sentence"}
+
+### Phase 7: Health Correlation (all 50 Source 1 repos)
+
+For each of the 50 RL repos, diagnose the current codebase (HEAD of default branch).
+
+**Diagnosis prompt** (same as Phase 6 Step 2, applied to current code instead of early snapshot).
+
+Output per lens per repo: count of roles rated as present, partial, or missing. This gives a "role completeness" score (0-N where N = number of bins in the lens).
+
+Correlate role completeness with SourceRank across the 50 repos. The lens whose completeness score correlates most strongly with project health wins.
+
+3 runs × 2 models × 8 lenses = 48 calls per repo. 50 repos = 2,400 calls.
 
 ---
 
@@ -232,6 +250,18 @@ NF diagnoses of early-stage codebases produce predictions that match subsequent 
 **Failure:** Any other lens >= NF. The ordering constraints don't predict development.
 
 **Note:** This is the strongest test. Fidelity (H1) measures how well a lens describes what exists. Predictive validity measures whether the lens tells you what's coming. NF claims ordering constraints that other lenses don't — if those constraints predict the order of development, the theory is load-bearing.
+
+### H5: Health Correlation
+
+NF role completeness correlates more strongly with project health (SourceRank) than role completeness under any other lens.
+
+**Test:** Spearman's rho between role completeness and SourceRank, computed per lens. Compare correlation coefficients across lenses using Steiger's test for dependent correlations.
+
+**Success:** NF rho > every other lens's rho, p < 0.05.
+
+**Failure:** Another lens's completeness correlates equally or more strongly. NF's decomposition doesn't track project health better than alternatives.
+
+**Power note:** n=50 repos detects Spearman's rho >= 0.28 at p < 0.05. If the true effect is smaller, this test is underpowered. Report the confidence interval regardless.
 
 ---
 
@@ -306,9 +336,28 @@ For each lens pair (NF, other):
 └─ Report per-repo results to check consistency
 ```
 
+### H5 Analysis
+
+```
+For each lens L:
+  completeness(repo, L) = mean roles rated "present" across 3 runs × 2 models
+  rho(L) = spearman(completeness across 50 repos, SourceRank across 50 repos)
+
+For each lens pair (NF, other):
+  z, p = steiger_test(rho_NF, rho_other, n=50)
+
+├─ NF rho > all others at p < 0.05?
+│   └─ CONFIRMED: NF completeness tracks project health best
+├─ Multiple lenses tied?
+│   └─ PARTIAL: role completeness predicts health, but not uniquely via NF
+├─ No lens correlates significantly?
+│   └─ NULL: role completeness (by any lens) doesn't predict health
+└─ Report all rho values with 95% CI
+```
+
 ### Multiple Comparisons
 
-Four hypotheses × seven pairwise tests = 28 primary tests. Holm-Bonferroni correction. Report both corrected and uncorrected p-values.
+Five hypotheses × seven pairwise tests = 35 primary tests (H1-H4), plus 7 Steiger tests (H5) = 42 total. Holm-Bonferroni correction. Report both corrected and uncorrected p-values.
 
 ### Cross-Model Agreement
 
@@ -332,6 +381,7 @@ For each lens, compare GPT-5.4 and Sonnet 4.5 mappings. If the two models disagr
 | H2 (consistency) | Shannon > CRISP-DM > NF > Intel Cycle > Immune > F3EAD > MAPE-K > VSM | Shannon's roles are mathematically crisp. NF's Filter/Attend boundary will cause splits. VSM's System 3 vs 4 is notoriously ambiguous. |
 | H3 (actionability) | NF > MAPE-K > Intel Cycle > F3EAD > Immune > CRISP-DM > Shannon > VSM | "Filter is broken" → fix the gate. "Channel has noise" → reduce noise? NF and MAPE-K roles map closest to implementation. |
 | H4 (prediction) | NF > MAPE-K > Immune > Intel Cycle > CRISP-DM > F3EAD > Shannon > VSM | NF predicts ordering (earlier stages built first). MAPE-K predicts monitoring gaps. Shannon has no ordering prediction. |
+| H5 (health) | NF > MAPE-K > VSM > Intel Cycle > Immune > CRISP-DM > F3EAD > Shannon | NF and MAPE-K roles map to implementation concerns that affect health. VSM was designed to diagnose organizational viability. Shannon's roles are structural, not health-indicative. |
 
 ### What Would Change Our Minds
 
@@ -345,7 +395,10 @@ For each lens, compare GPT-5.4 and Sonnet 4.5 mappings. If the two models disagr
 | MAPE-K beats NF on H3 | Engineering-native vocabulary is more actionable than theory-native. |
 | All 6-bin lenses cluster on H1 | Decomposition doesn't matter. Six bins with any definitions is enough. The proof is valid but the vocabulary is not load-bearing. |
 | NF wins H4 but loses H1 | The ordering theory predicts, but the vocabulary doesn't describe. Constraints are load-bearing; role names are not. |
-| NF loses all four | Six roles are a formal specification with no practical advantage. |
+| NF wins H5 but loses H1 | The decomposition tracks health but doesn't describe components well. Diagnostic value without descriptive power. |
+| VSM beats NF on H5 | A framework designed for organizational viability diagnoses health better than one designed for information processing. |
+| No lens correlates on H5 | Role completeness doesn't predict project health. The connection between framework coverage and system viability is weaker than theorized. |
+| NF loses all five | Six roles are a formal specification with no practical advantage. |
 
 ---
 
@@ -357,9 +410,10 @@ No human coders. Each trial is a CLI call.
 |-------|----------|-------|-------|
 | Phases 2-5 | ~160 calls/data point | ~100 data points | ~16,000 |
 | Phase 6 | ~96 calls/repo | 5 repos | ~480 |
-| **Total** | | | **~16,500** |
+| Phase 7 | ~48 calls/repo | 50 repos | ~2,400 |
+| **Total** | | | **~18,900** |
 
-At ~10s per call: ~46 hours wall clock. Parallelizable across models and lenses.
+At ~10s per call: ~53 hours wall clock. Parallelizable across models and lenses.
 
 ---
 
@@ -368,7 +422,8 @@ At ~10s per call: ~46 hours wall clock. Parallelizable across models and lenses.
 Fixed dataset. Map everything that qualifies. No adaptive stopping.
 
 **Minimum viable dataset:**
-- Source 1: >= 20 qualifying bug issues
+- Source 1 (bugs): >= 20 qualifying bug issues across all 50 repos
+- Source 1 (health): all 50 repos with valid SourceRank scores
 - Source 2: >= 30 qualifying post-mortems
 - Source 3: >= 50 ablation rows
 
@@ -385,6 +440,8 @@ data/
 ├── reconstructions/      # {datapoint}_{lens}_{model}_{run}_recon.json
 ├── judgments/            # {datapoint}_{lens}_{model}_{run}_judge{1,2,3}.json
 ├── repairs/              # {datapoint}_{lens}_{model}_{run}_repair.json
+├── diagnoses/            # {repo}_{lens}_{model}_{run}_diag.json (Phases 6-7)
+├── health/               # {repo}_sourcerank.json
 ├── scores/               # Aggregated scores per data point per lens
 └── analysis/             # Final results, plots
 ```
@@ -416,7 +473,7 @@ data/
 
 ## Limitations
 
-**Survivorship bias (H4).** The Source 1 repos are the top 5 RL frameworks by GitHub stars — projects that survived. Repos that died early (possibly from missing critical roles) aren't in the dataset. The framework's strongest claim (breaking a role in a recursive loop compounds to extinction) is untestable here because dead repos don't accumulate stars.
+**Survivorship bias (H4, partially addressed by H5).** H4 uses the top 5 RL repos — projects that survived. H5 partially addresses this by expanding to 50 repos sorted by stars, which naturally spans a range of project health (thriving to declining). However, the sample is still biased toward repos with enough stars to appear in the top 50. Projects that died before gaining any traction are absent. The framework's strongest claim (breaking a role compounds to extinction) would require a prospective study tracking projects from inception.
 
 **Tech-domain bias (all hypotheses).** All three sources are software/ML. The framework claims to apply to comedy, immune systems, law, and evolution. This study tests tech systems only. A positive result does not validate cross-domain generality; a negative result does not rule it out.
 

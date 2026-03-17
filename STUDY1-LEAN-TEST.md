@@ -124,6 +124,8 @@ RL repos have explicit perceive/act/learn loops where NF roles are architectural
 
 **Deduplication:** If the same component appears in multiple issues or rows, keep the first occurrence in enumeration order.
 
+**Independence rule:** At most one data point per parent source (one per repo for Source 1, one per post-mortem for Source 2, one per paper for Source 3). If a repo has multiple qualifying issues, take the first by creation date. If a paper has multiple ablation rows, take the first row in the table. This ensures observations are independent across different systems/incidents/papers.
+
 **Ambiguous cases:** Flag with `uncertain: true` in the data point record. Include in primary analysis. Report sensitivity analysis with uncertain cases excluded.
 
 ---
@@ -132,7 +134,7 @@ RL repos have explicit perceive/act/learn loops where NF roles are architectural
 
 Single model: GPT-5.4 via codex CLI. Cross-model replication left to future work.
 
-**Generation settings:** Temperature = 1.0 (codex CLI default). Seeds cannot be fixed via codex CLI — the 3 runs per data point capture stochastic variation. All raw responses are logged verbatim. If codex CLI exposes temperature or seed control in the future, fix temperature = 0.7 and log it.
+**Generation settings (frozen at Phase 2 start, no mid-study changes):** Record `codex --version` and the exact model identifier returned by the API in the first call. Temperature = 1.0 (codex CLI default). Seeds cannot be fixed via codex CLI — the 3 runs per data point capture stochastic variation. All raw responses are logged verbatim. No generation settings are changed after Phase 2 begins, regardless of CLI updates.
 
 ### Phase 1: Data Enumeration
 

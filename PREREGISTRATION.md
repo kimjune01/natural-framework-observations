@@ -37,9 +37,11 @@ Eight lenses selected from a [catalog of 80+ frameworks](https://github.com/kimj
 | Immune Response | 6 | Immunology | Biological pipeline with memory and contraction |
 | F3EAD | 6 | Military operations | Operationally oriented; feedback via Disseminate→Find |
 | CRISP-DM | 6 | Data science | Cycles back from Evaluation to Business Understanding |
-| Natural Framework | 6 | Formal specification | Forward pipeline with backward pass (Consolidate) |
+| Natural Framework | 6 | Formal specification | Pre/postcondition contracts at each role transition |
 
 Full role definitions and decision criteria: [`rubric.md`](rubric.md).
+
+Each lens gets its full specification as input to the LLM. The Natural Framework uniquely specifies pre/postconditions at each role transition (the handshake: each role's postcondition is the next role's precondition). Other lenses do not specify contracts between stages, so they don't get them. This is not an unfair advantage — it's the thing being tested. The question is whether formal contracts between stages improve fidelity beyond what role labels alone provide.
 
 ---
 
@@ -95,7 +97,7 @@ For each data point (bug issue, post-mortem, or ablation row) and each lens:
 >
 > Here is a decomposition framework with [N] roles:
 >
-> [lens rubric inserted here — role names and definitions only]
+> [lens rubric inserted here — full specification per rubric.md, including pre/postconditions for NF]
 >
 > 1. Which role does this component best fit? Pick exactly one, or say "unmapped" if none fit.
 > 2. In one sentence, what does a component with this role label typically do?

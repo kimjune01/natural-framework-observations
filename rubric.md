@@ -81,14 +81,16 @@
 
 ## Natural Framework (6 bins)
 
-| Role | Definition | Decision criterion |
-|------|-----------|-------------------|
-| **Perceive** | Ingest external input, convert to internal format | Does it receive and transform external data? |
-| **Cache** | Temporarily hold data between processing steps | Does it buffer without transforming? |
-| **Filter** | Gate, threshold, or reject data by criterion | Does it remove items that fail a test? |
-| **Attend** | Rank, score, or select among competing items | Does it order items by priority? |
-| **Remember** | Write processed data to persistent storage | Does it persist data durably? |
-| **Consolidate** | Read past outcomes, update system parameters | Does it learn from stored results? |
+Unlike the other lenses, the Natural Framework specifies pre/postconditions at each role transition. Each role's postcondition is the next role's precondition. This is the handshake — the formal contract that other lenses do not provide.
+
+| Role | Definition | Decision criterion | Precondition | Postcondition |
+|------|-----------|-------------------|-------------|--------------|
+| **Perceive** | Ingest external input, convert to internal format | Does it receive and transform external data? | External data exists | Data is in internal format |
+| **Cache** | Temporarily hold data between processing steps | Does it buffer without transforming? | Data is in internal format | Data is held in a buffer, retrievable by next stage |
+| **Filter** | Gate, threshold, or reject data by criterion | Does it remove items that fail a test? | Buffered data is available | Items failing the criterion are rejected; only passing items remain |
+| **Attend** | Rank, score, or select among competing items | Does it order items by priority? | Items have been filtered | Remaining items are ranked by priority |
+| **Remember** | Write processed data to persistent storage | Does it persist data durably? | Items are ranked/selected | Data is written to persistent storage, retrievable across cycles |
+| **Consolidate** | Read past outcomes, update system parameters | Does it learn from stored results? | Persistent store contains past outcomes | System parameters are updated; next cycle reflects past results |
 
 ---
 
@@ -100,4 +102,4 @@
 
 ---
 
-*Rubrics used verbatim in LLM prompts. No additional context provided to the mapper beyond the role table for the lens being applied.*
+*Rubrics used verbatim in LLM prompts. Each lens gets its full specification: role table, definitions, and decision criteria. The Natural Framework additionally gets pre/postconditions because it specifies them. Other lenses do not get invented contracts — they get exactly what they define.*

@@ -4,7 +4,7 @@
 
 ## Study Information
 
-**Title:** Comparative Fidelity of Four Information-Processing Decompositions Applied to Public System Failures and ML Ablations
+**Title:** Comparative Fidelity of Eight Information-Processing Decompositions Applied to Public System Failures and ML Ablations
 
 **Authors:** June Kim
 
@@ -18,46 +18,51 @@
 
 ## Background
 
-Multiple frameworks decompose information-processing systems into named roles or stages. The Natural Framework claims six roles (Perceive, Cache, Filter, Attend, Remember, Consolidate). OODA claims four (Observe, Orient, Decide, Act). The Intelligence Cycle claims six (Direction, Collection, Processing, Analysis, Dissemination, Feedback). IPO claims three (Input, Process, Output).
+Multiple frameworks decompose information-processing systems into named roles or stages. Each is a lens that compresses a system description into role labels. The question is which lens preserves the most information through the compression. That is fidelity.
 
-Each is a lens. Each compresses a system description into role labels. The question is not whether any lens "fits" — any taxonomy with enough bins will achieve high coverage. The question is which lens preserves the most information through the compression. That is fidelity.
+A high-fidelity lens lets you reconstruct what a component does from its label alone. A low-fidelity lens loses the signal. The difference is measurable: map a component to a role, then try to recover the original from just the label. The lens that enables the best reconstruction is the highest-fidelity lens.
 
-A high-fidelity lens lets you reconstruct what a component does from its label alone. "Process" (IPO) tells you nothing. "Orient" (OODA) tells you a little. "Filter" (Natural Framework) tells you it gates. The label carries more bits. That difference is measurable.
+To control for granularity (more bins = more bits by construction), we compare lenses at matched bin counts: five lenses at 5-6 bins plus three at 6 bins. If the Natural Framework beats other 6-bin lenses, the advantage is the decomposition, not the granularity.
 
 ---
 
 ## Design
 
-A comparative fidelity study. The same data is mapped through four lenses by independent coders. Fidelity is measured by reconstruction accuracy: given only the role label, can a second coder recover what the component does?
+LLM-automated comparative fidelity study. Two frontier models (GPT-5.4 via Codex CLI, Claude Sonnet 4.5 via Claude Code) independently map the same data through eight lenses. Fidelity is measured by reconstruction accuracy: a separate LLM judge, blind to lens identity, scores how well each role label enables recovery of the original component description.
+
+No human coders. LLMs as coders eliminates recruitment, fatigue, and training confounds. Model bias is constant across lenses within each model, and cross-model comparison detects it.
 
 ---
 
 ## Lenses Under Comparison
 
-Four lenses, selected to span granularity (3-6 bins) and origin (military, engineering, intelligence, cognitive science). Selection criteria: the lens must (1) claim to decompose information-processing systems generally, not just one domain, and (2) have named stages/roles that can serve as labels.
+Eight lenses. Selection criteria: (1) claims to decompose information-processing systems generally, (2) has 5-7 named stages/roles, (3) comes from a distinct intellectual tradition. Lenses were selected from a [catalog of 80+ frameworks](https://github.com/kimjune01/natural-framework-fidelity/blob/master/lens_catalog.md) enumerated by GPT-5.4 before any data was collected.
 
-### IPO (3 bins) — baseline
-
-| Role | Definition |
-|------|-----------|
-| **Input** | Data enters the system |
-| **Process** | Data is transformed |
-| **Output** | Results leave the system |
-
-Source: general systems theory. The minimal decomposition. If a finer-grained lens doesn't beat IPO, its extra categories add noise, not signal.
-
-### OODA (4 bins)
+### Viable System Model (5 bins) — cybernetics
 
 | Role | Definition |
 |------|-----------|
-| **Observe** | Gather information from the environment |
-| **Orient** | Analyze and synthesize observations into a mental model |
-| **Decide** | Select a course of action |
-| **Act** | Execute the decision |
+| **System 1 (Operations)** | Primary activities that produce the organization's output |
+| **System 2 (Coordination)** | Manages interactions and conflicts between operational units |
+| **System 3 (Control)** | Monitors and optimizes operations as a whole |
+| **System 4 (Intelligence)** | Scans the environment, models the future, plans adaptation |
+| **System 5 (Policy)** | Sets identity, values, and ultimate purpose |
 
-Source: [Boyd (1987)](https://en.wikipedia.org/wiki/OODA_loop), military strategy. Widely applied beyond military contexts.
+Source: [Beer (1972)](https://en.wikipedia.org/wiki/Viable_system_model). Recursive: each viable system contains viable subsystems. Designed to diagnose organizational viability — close to what NF claims.
 
-### Intelligence Cycle (6 bins)
+### MAPE-K (5 bins) — autonomic computing
+
+| Role | Definition |
+|------|-----------|
+| **Monitor** | Collect data from the managed system and environment |
+| **Analyze** | Correlate and model monitored data to detect issues |
+| **Plan** | Decide on actions to achieve objectives |
+| **Execute** | Carry out planned changes to the managed system |
+| **Knowledge** | Shared persistent store that all other stages read and write |
+
+Source: [IBM (2003)](https://en.wikipedia.org/wiki/Autonomic_computing). Self-managing systems. Knowledge is a persistent store similar to Remember/Consolidate.
+
+### Intelligence Cycle (6 bins) — military/intelligence
 
 | Role | Definition |
 |------|-----------|
@@ -68,9 +73,61 @@ Source: [Boyd (1987)](https://en.wikipedia.org/wiki/OODA_loop), military strateg
 | **Dissemination** | Distribute finished intelligence to consumers |
 | **Feedback** | Consumers inform the next cycle's direction |
 
-Source: [intelligence community](https://en.wikipedia.org/wiki/Intelligence_cycle). Six stages with a feedback loop — same bin count as the Natural Framework.
+Source: [Intelligence community](https://en.wikipedia.org/wiki/Intelligence_cycle). Six stages with a feedback loop.
 
-### Natural Framework (6 bins)
+### Shannon Communication Model (6 bins) — information theory
+
+| Role | Definition |
+|------|-----------|
+| **Information Source** | Produces the message to be communicated |
+| **Transmitter/Encoder** | Converts the message into a signal suitable for the channel |
+| **Channel** | The medium through which the signal travels |
+| **Noise** | Interference that corrupts the signal during transmission |
+| **Receiver/Decoder** | Reconstructs the message from the received signal |
+| **Destination** | The intended recipient of the message |
+
+Source: [Shannon (1948)](https://en.wikipedia.org/wiki/Shannon%E2%80%93Weaver_model). Mathematically grounded. No feedback loop.
+
+### Immune Response Schema (6 bins) — immunology
+
+| Role | Definition |
+|------|-----------|
+| **Recognition** | Detect foreign antigen via pattern-matching receptors |
+| **Activation** | Antigen-presenting cells trigger the adaptive response |
+| **Clonal Expansion** | Selected lymphocytes proliferate rapidly |
+| **Effector Response** | Activated cells neutralize or destroy the threat |
+| **Contraction** | Excess effector cells are culled after the threat subsides |
+| **Memory** | Surviving cells persist as long-lived memory for future encounters |
+
+Source: [Immunology textbooks](https://en.wikipedia.org/wiki/Adaptive_immune_system). Biological pipeline with memory. NF's home turf — many of the framework's examples come from biology.
+
+### F3EAD (6 bins) — military operations
+
+| Role | Definition |
+|------|-----------|
+| **Find** | Identify targets through intelligence and surveillance |
+| **Fix** | Locate and track the target precisely enough to act |
+| **Finish** | Execute the operation against the target |
+| **Exploit** | Gather intelligence from the operation's results |
+| **Analyze** | Process exploited material to generate new understanding |
+| **Disseminate** | Share findings to feed subsequent cycles |
+
+Source: [US Special Operations](https://en.wikipedia.org/wiki/F3EAD). Six stages, operationally oriented, feedback via Disseminate→Find.
+
+### CRISP-DM (6 bins) — data science
+
+| Role | Definition |
+|------|-----------|
+| **Business Understanding** | Define objectives and requirements from a business perspective |
+| **Data Understanding** | Collect initial data and identify quality issues |
+| **Data Preparation** | Construct the final dataset from raw data |
+| **Modeling** | Apply modeling techniques to prepared data |
+| **Evaluation** | Assess the model against business objectives |
+| **Deployment** | Put the model into production use |
+
+Source: [CRISP-DM consortium (1999)](https://en.wikipedia.org/wiki/Cross-industry_standard_process_for_data_mining). Widely used workflow. Cycles back from Evaluation to Business Understanding.
+
+### Natural Framework (6 bins) — formal specification
 
 | Role | Definition |
 |------|-----------|
@@ -81,36 +138,27 @@ Source: [intelligence community](https://en.wikipedia.org/wiki/Intelligence_cycl
 | **Remember** | Write processed data to persistent storage |
 | **Consolidate** | Read past outcomes from storage, update system parameters |
 
-Source: [The Natural Framework](https://june.kim/the-natural-framework). Six roles with a backward pass (Consolidate).
+Source: [The Natural Framework](https://june.kim/the-natural-framework). [Lean 4 proof](https://github.com/kimjune01/natural-framework). Six roles with a backward pass (Consolidate).
 
 ---
 
 ## Data Sources
 
-Same three sources as the original design. All pre-specified and mechanically enumerable.
+All pre-specified and mechanically enumerable.
 
 ### Source 1: RL Framework Bug Issues
 
-**Repos:** Top 5 reinforcement learning frameworks by GitHub stars:
+**Repos:** Top 5 RL frameworks by GitHub stars:
 
 ```
 gh search repos "reinforcement learning" --language=python --sort=stars --limit=5
 ```
 
-**Issues:** All closed issues labeled "bug" with >= 10 comments, created 2022-2025.
-
-**Enumeration query per repo:**
-
-```
-gh issue list -R {owner}/{repo} --state=closed --label=bug --json number,title,comments,createdAt \
-  | jq '[.[] | select(.comments >= 10) | select(.createdAt >= "2022-01-01" and .createdAt <= "2025-12-31")]'
-```
+**Issues:** Closed, labeled "bug", >= 10 comments, created 2022-2025.
 
 ### Source 2: Public Post-Mortems
 
 **Source:** All entries on [github.com/danluu/post-mortems](https://github.com/danluu/post-mortems) at a snapshot commit hash (recorded in `DATA_SOURCES.md`).
-
-**Inclusion:** Software system failures only.
 
 **Exclusion:** Hardware-only root cause, natural disaster, physical security breach.
 
@@ -118,99 +166,113 @@ gh issue list -R {owner}/{repo} --state=closed --label=bug --json number,title,c
 
 **Papers:** NeurIPS 2024 oral/spotlight papers containing "ablation" in the text.
 
-**Rows:** Every row that removes or disables a named component. Exclude hyperparameter changes and additions.
+**Rows:** Every row that removes or disables a named component.
+
+---
+
+## Procedure
+
+### Phase 1: Data Enumeration
+
+Run all queries mechanically. Commit raw results before any mapping begins.
+
+### Phase 2: Mapping
+
+For each data point (bug issue, post-mortem, or ablation row) and each lens:
+
+**Mapper prompt** (used verbatim for each model × lens × data point):
+
+> Here is a component or failure description from a real system:
+>
+> [component description inserted here]
+>
+> Here is a decomposition framework with [N] roles:
+>
+> [lens rubric inserted here — role names and definitions only]
+>
+> 1. Which role does this component best fit? Pick exactly one, or say "unmapped" if none fit.
+> 2. In one sentence, what does a component with this role label typically do?
+
+Each data point is mapped 3 times per model per lens (to measure consistency). Total per data point: 3 runs × 2 models × 8 lenses = 48 mapping calls.
+
+### Phase 3: Reconstruction
+
+For each mapping result, a separate judge model reconstructs:
+
+**Reconstruction prompt** (used verbatim):
+
+> A component in an information-processing system was labeled with the role "[ROLE_LABEL]" in a framework called "[LENS_NAME]".
+>
+> The framework defines this role as: "[ROLE_DEFINITION]"
+>
+> Based only on this label and definition, write one sentence describing what this component most likely does. Be as specific as possible.
+
+### Phase 4: Judging
+
+A judge model (blind to lens identity — lens name replaced with "Lens A", "Lens B", etc., randomized per data point) scores reconstruction fidelity:
+
+**Judge prompt** (used verbatim):
+
+> Here is what a system component actually does:
+> [original description]
+>
+> Here is a reconstruction of what it does, based only on a role label from a decomposition framework:
+> [reconstruction]
+>
+> How much of the original description is recoverable from the reconstruction?
+>
+> Score:
+> - 3: The reconstruction identifies the component's specific function
+> - 2: The reconstruction identifies the general category but not the specific function
+> - 1: The reconstruction is too vague to distinguish this component from others
+>
+> Return: {"score": N, "rationale": "one sentence"}
+
+Each judgment is run 3 times per judge model. Majority vote determines the score. Both GPT-5.4 and Sonnet 4.5 judge every reconstruction independently.
+
+### Phase 5: Actionability (Sources 1 and 2 only)
+
+For system failures, an additional reconstruction task:
+
+**Repair prompt** (used verbatim):
+
+> A system failure was categorized under the role "[ROLE_LABEL]" in a framework called "[LENS_NAME]".
+>
+> The framework defines this role as: "[ROLE_DEFINITION]"
+>
+> Based only on this label and definition, write one sentence suggesting how to fix the system.
+
+Judge scores the repair against the actual resolution (from the bug report or post-mortem) on the same 1-3 scale.
 
 ---
 
 ## Hypotheses
 
-### H1: Mapping Fidelity (primary)
+### H1: Reconstruction Fidelity (primary)
 
-The Natural Framework produces higher reconstruction accuracy than the other three lenses.
+The Natural Framework produces higher reconstruction scores than every other lens at the same bin count (6-bin lenses) and overall.
 
-**Procedure:**
+**Success criterion:** NF mean reconstruction score > every other 6-bin lens's mean score, p < 0.05 (Wilcoxon signed-rank, paired by data point). Separately: NF > every 5-bin lens.
 
-1. Coder A reads a component description (from bug issues, post-mortems, or ablation tables) and assigns a role label under each of the four lenses.
-2. Coder B sees only the role label and the lens name. They write a one-sentence prediction of what the component does.
-3. A third judge scores reconstruction accuracy: how much of the original description is recoverable from the label alone.
+**Failure criterion:** Any other 6-bin lens scores >= NF. The decomposition is not uniquely high-fidelity.
 
-**Scoring (per data point, per lens):**
+### H2: Mapping Consistency
 
-| Score | Criterion |
-|-------|----------|
-| 3 | Reconstruction identifies the component's specific function (e.g., "it rejects low-quality input") |
-| 2 | Reconstruction identifies the general category but not the specific function (e.g., "it transforms data somehow") |
-| 1 | Reconstruction is too vague to distinguish from other components (e.g., "it processes things") |
+The Natural Framework produces higher self-consistency (agreement across 3 runs of the same model) than other lenses.
 
-**Success criterion:** Natural Framework mean reconstruction score > every other lens's mean score, with paired difference significant at p < 0.05 (Wilcoxon signed-rank, paired by data point).
+**Metric:** Fleiss' kappa across 3 runs per model, computed per lens.
 
-**Failure criterion:** Natural Framework mean score <= IPO mean score. If a 6-bin lens can't beat a 3-bin baseline, the extra categories are noise.
+**Success criterion:** NF kappa > every other lens's kappa for both models.
 
-**Partial support:** Natural Framework > IPO and OODA but not > Intelligence Cycle. The six bins help, but it's the granularity, not the specific decomposition.
+**Failure criterion:** NF kappa < any other 6-bin lens. The role boundaries create inconsistency.
 
-### H2: Inter-Rater Agreement
+### H3: Diagnostic Actionability
 
-The Natural Framework produces higher inter-rater agreement than the other three lenses.
+For system failures, NF role labels produce repair suggestions that match actual resolutions better than other lenses.
 
-**Procedure:** Two coders independently map the same components under all four lenses. Compute Cohen's kappa per lens.
+**Success criterion:** NF mean actionability > every other lens, p < 0.05 (Wilcoxon signed-rank).
 
-**Success criterion:** Natural Framework kappa > every other lens's kappa.
-
-**Failure criterion:** Natural Framework kappa < IPO kappa. If coders agree more on 3 vague bins than 6 specific ones, the specificity creates ambiguity rather than resolving it.
-
-**Note:** Higher agreement alone doesn't prove fidelity. IPO might achieve perfect agreement (everything is "Process") with zero fidelity. H1 and H2 must be evaluated together.
-
-### H3: Diagnostic Specificity
-
-For system failures (Sources 1 and 2), the Natural Framework's role labels produce more actionable repair suggestions than the other lenses.
-
-**Procedure:**
-
-1. For each failure, Coder A assigns a role label under each lens.
-2. Coder B sees only the label and writes a one-sentence repair suggestion.
-3. A judge scores actionability against the actual resolution documented in the bug report or post-mortem.
-
-**Scoring (per failure, per lens):**
-
-| Score | Criterion |
-|-------|----------|
-| 3 | Repair suggestion matches the actual resolution in substance |
-| 2 | Repair suggestion is in the right area but not specific enough to act on |
-| 1 | Repair suggestion is generic or wrong |
-
-**Success criterion:** Natural Framework mean actionability > every other lens, p < 0.05 (Wilcoxon signed-rank).
-
-**Failure criterion:** No significant difference between any lenses. The decomposition doesn't matter for diagnosis.
-
----
-
-## Coding Procedure
-
-### Coders
-
-Three coders total:
-- **Coder A:** Maps components to roles under all four lenses. Must be unfamiliar with the Natural Framework.
-- **Coder B:** Reconstructs component descriptions from role labels only. Must be unfamiliar with both the data and the framework.
-- **Judge:** Scores reconstruction accuracy and actionability against ground truth. Blind to which lens produced which label.
-
-An additional **Coder A'** independently maps the same components for the inter-rater agreement analysis (H2).
-
-### Rubrics
-
-Each lens gets its own rubric page (see `rubric.md`). The Natural Framework rubric uses the existing decision tree. The other three rubrics use equivalent decision trees constructed from their published definitions.
-
-**Critical constraint:** The rubrics must be equivalently detailed. If the Natural Framework rubric is more specific than the OODA rubric, any fidelity advantage could come from rubric quality rather than lens quality. All four rubrics must have: (1) a decision tree of the same depth, (2) boundary-case guidance, and (3) training examples.
-
-### Training
-
-All coders practice on 5 shared examples before real coding. Training examples are the same across all four lenses. Clarifications to any rubric are committed before coding begins.
-
-### Blinding
-
-- Coder A does not know which lens is being tested (they map under all four for every data point).
-- Coder B does not know which lens produced a given label (labels are anonymized as "Lens 1", "Lens 2", etc., randomized per data point).
-- The judge does not know which lens is being evaluated.
-- Lens identity is revealed only during analysis.
+**Failure criterion:** No significant differences. The lens doesn't matter for diagnosis.
 
 ---
 
@@ -220,60 +282,70 @@ All coders practice on 5 shared examples before real coding. Training examples a
 
 ```
 For each data point d and each lens L:
-  reconstruction_score(d, L) ∈ {1, 2, 3}
+  fidelity(d, L) = median score across 3 mapper runs × 2 judge models
 
-For each lens pair (NF, other):
+For each 6-bin lens pair (NF, other):
   W, p = wilcoxon_signed_rank(scores_NF, scores_other)
 
-├─ NF > all three others at p < 0.05?
-│   └─ CONFIRMED: Natural Framework is highest-fidelity lens
-├─ NF > IPO and OODA but not > Intelligence Cycle?
-│   └─ PARTIAL: six bins help, but NF's specific decomposition is not uniquely better
-├─ NF ≤ IPO?
-│   └─ DISCONFIRMED: extra categories add noise
-└─ Mixed results?
-    └─ Report all pairwise comparisons with effect sizes
+For each 5-bin lens pair (NF, other):
+  W, p = wilcoxon_signed_rank(scores_NF, scores_other)
+
+├─ NF > all seven others at p < 0.05 (Holm-Bonferroni corrected)?
+│   └─ CONFIRMED: NF is highest-fidelity lens
+├─ NF > all 6-bin lenses but not all 5-bin lenses?
+│   └─ PARTIAL: NF wins at matched granularity; 5-bin lenses may
+│      sacrifice resolution for coherence
+├─ Another 6-bin lens >= NF?
+│   └─ DISCONFIRMED: NF decomposition is not uniquely better
+└─ Report full pairwise matrix with effect sizes
 ```
 
 ### H2 Analysis
 
 ```
-For each lens L:
-  kappa(L) = Cohen's kappa between Coder A and Coder A'
+For each lens L and each model M:
+  kappa(L, M) = Fleiss' kappa across 3 mapping runs
 
-├─ kappa(NF) > kappa(all others)?
-│   └─ CONFIRMED: NF categories are clearest to apply
-├─ kappa(NF) < kappa(IPO)?
-│   └─ DISCONFIRMED: NF specificity creates ambiguity
-└─ Report per-role kappa for NF to identify which boundaries are hardest
+├─ NF kappa highest for both models?
+│   └─ CONFIRMED: NF roles are most consistently applied
+├─ NF kappa highest for one model only?
+│   └─ MODEL-DEPENDENT: consistency depends on the mapper
+├─ Another 6-bin lens > NF for both models?
+│   └─ DISCONFIRMED: NF boundaries are ambiguous
+└─ Report per-role consistency to identify which NF boundaries are hardest
 ```
 
 ### H3 Analysis
 
 ```
 For each failure f and each lens L:
-  actionability_score(f, L) ∈ {1, 2, 3}
+  actionability(f, L) = median score across runs × judge models
 
 For each lens pair (NF, other):
   W, p = wilcoxon_signed_rank(action_NF, action_other)
 
-├─ NF > all three others at p < 0.05?
-│   └─ CONFIRMED: NF produces more actionable diagnoses
+├─ NF > all others at p < 0.05?
+│   └─ CONFIRMED: NF produces most actionable diagnoses
 ├─ No significant differences?
-│   └─ DISCONFIRMED: decomposition doesn't matter for repair
+│   └─ DISCONFIRMED: lens doesn't help diagnosis
 └─ Report all pairwise comparisons
 ```
 
 ### Multiple Comparisons
 
-Three hypotheses, three pairwise tests each = 9 tests. Apply Holm-Bonferroni correction. Report both corrected and uncorrected p-values.
+Three hypotheses × seven pairwise tests = 21 primary tests. Apply Holm-Bonferroni correction. Report both corrected and uncorrected p-values.
+
+### Cross-Model Agreement
+
+For each lens, compare GPT-5.4 and Sonnet mappings. If the two models disagree systematically by lens (one model favors NF, the other doesn't), the result is model-dependent. Report as a limitation.
 
 ### Exploratory Analyses (labeled as such)
 
-- Which NF role boundaries produce the most disagreement? (per-role kappa)
+- Which NF role boundaries cause the most inconsistency? (per-role kappa)
 - Does fidelity vary by data source? (bug issues vs post-mortems vs ablations)
-- Does the Intelligence Cycle's "Feedback" map to NF's "Consolidate"? (role correspondence)
+- Do any lenses cluster? (if Intelligence Cycle and NF always agree, they're the same lens in practice)
 - Which lens produces the most "unmapped" cases?
+- Role correspondence matrix: which roles across lenses map to the same components?
 
 ---
 
@@ -281,54 +353,95 @@ Three hypotheses, three pairwise tests each = 9 tests. Apply Holm-Bonferroni cor
 
 | Hypothesis | Prediction | Rationale |
 |-----------|-----------|-----------|
-| H1 (fidelity) | NF > Intelligence Cycle > OODA > IPO | NF distinguishes Cache from Remember and Filter from Attend. The Intelligence Cycle collapses these. OODA lumps even further. IPO is barely a lens. |
-| H2 (agreement) | Intelligence Cycle > NF > OODA > IPO | NF's Filter/Attend boundary will cause disagreements. The Intelligence Cycle's stages are more familiar from everyday vocabulary. IPO is trivially high agreement, low information. |
-| H3 (actionability) | NF > OODA > Intelligence Cycle > IPO | "Filter is broken" tells you to fix the gate. "Orient is broken" tells you to fix... your mental model? NF's roles are closer to implementation. |
+| H1 (fidelity) | NF > Immune > Intelligence Cycle > F3EAD > Shannon > CRISP-DM > MAPE-K > VSM | NF distinguishes Cache/Remember and Filter/Attend. Immune Response is close because it has biological memory. Shannon has no feedback. VSM is organizational, not operational. |
+| H2 (consistency) | Shannon > CRISP-DM > NF > Intelligence Cycle > Immune > F3EAD > MAPE-K > VSM | Shannon's roles are mathematically crisp. NF's Filter/Attend boundary will cause splits. VSM's "System 3 vs 4" is notoriously ambiguous. |
+| H3 (actionability) | NF > MAPE-K > Intelligence Cycle > F3EAD > Immune > CRISP-DM > Shannon > VSM | "Filter is broken" tells you to fix the gate. "Channel has noise" tells you... to reduce noise? NF and MAPE-K roles map closest to implementation. |
 
 ### What Would Change Our Minds
 
 | Outcome | Implication |
 |---------|------------|
-| NF wins H1, H2, H3 | NF is the best available lens for system diagnosis. Ship it. |
-| NF wins H1 and H3, loses H2 | NF is high-fidelity but hard to apply consistently. The rubric needs work, or the role boundaries need sharpening. |
-| Intelligence Cycle ties NF on H1 | The specific decomposition matters less than having six bins with a feedback loop. The NF's value is the proof, not the vocabulary. |
-| IPO ties everyone on H3 | Decomposition granularity doesn't improve diagnosis. The lens doesn't matter; the coder's expertise does. |
-| NF loses H1 to Intelligence Cycle | A domain-specific decomposition (intelligence) beats a domain-general one (NF) on the data sources we chose. Try different domains. |
-| NF loses all three | The six roles are a formal specification with no practical advantage over existing lenses. The math is valid; the vocabulary is not uniquely useful. |
+| NF wins H1 and H3, any bin count | NF is the best available lens. Ship it. |
+| NF wins H1 among 6-bin only | NF is best at this granularity. The proof constrains the decomposition well. |
+| Immune Response ties or beats NF on H1 | The biological decomposition is equally high-fidelity. NF may have been derived from biology all along. |
+| Intelligence Cycle beats NF on H1 | A familiar vocabulary beats a novel one, even if the novel one is formally derived. |
+| Shannon beats NF on H2 but loses H1 | Mathematical crispness aids consistency but not fidelity. Crisp categories can be consistently wrong. |
+| MAPE-K beats NF on H3 | An engineering-native vocabulary is more actionable than a theory-native one. |
+| All 6-bin lenses cluster together on H1 | The specific decomposition doesn't matter. Six bins with any reasonable definitions is enough. The proof is valid but the vocabulary is not load-bearing. |
+| NF loses all three | The six roles are a formal specification with no practical advantage. |
+
+---
+
+## Budget
+
+No human coders. Each trial is a CLI call.
+
+Per data point: 48 mapping calls + 48 reconstruction calls + 48 judge calls + 16 repair calls (Sources 1 & 2) = ~160 calls.
+
+Estimated dataset: ~100 data points. Total: ~16,000 CLI calls.
+
+At ~10s per call: ~44 hours wall clock. Parallelizable across models and lenses.
 
 ---
 
 ## Stopping Rules
 
-Fixed dataset. Code everything that qualifies. No adaptive stopping.
+Fixed dataset. Map everything that qualifies. No adaptive stopping.
 
 **Minimum viable dataset:**
 - Source 1: At least 20 qualifying bug issues
 - Source 2: At least 30 qualifying post-mortems
 - Source 3: At least 50 ablation rows
 
-If any source falls below its minimum, report the underpowered analysis as a limitation.
-
 ---
 
-## Timeline
+## Logging
 
-1. **Week 1:** Enumerate data sources. Write all four rubrics. Verify equivalent detail across rubrics.
-2. **Week 2:** Recruit and train coders. Practice on shared examples.
-3. **Week 3-4:** Independent coding (Coder A, Coder A' map all data under all four lenses).
-4. **Week 5:** Reconstruction task (Coder B). Judging.
-5. **Week 6:** Analysis and reporting.
+### Directory structure
+
+```
+data/
+├── enumeration/          # Raw query results, committed before mapping
+├── mappings/             # {datapoint}_{lens}_{model}_{run}.json
+├── reconstructions/      # {datapoint}_{lens}_{model}_{run}_recon.json
+├── judgments/            # {datapoint}_{lens}_{model}_{run}_judge{1,2,3}.json
+├── repairs/              # {datapoint}_{lens}_{model}_{run}_repair.json
+├── scores/               # Aggregated scores per data point per lens
+└── analysis/             # Final results, posteriors, plots
+```
+
+### Per-mapping record (JSON)
+
+```json
+{
+  "datapoint_id": "stable-baselines3_issue_1234",
+  "source": "rl_bugs",
+  "lens": "natural_framework",
+  "model": "gpt-5.4",
+  "run": 1,
+  "role_assigned": "Filter",
+  "mapper_description": "This component gates experiences by priority before they enter the replay buffer.",
+  "unmapped": false,
+  "timestamp": "2026-03-20T14:32:00Z"
+}
+```
+
+### Commit policy
+
+- Enumeration results: committed before any mapping begins.
+- Mapping results: committed after each lens × model batch.
+- Judgments: committed after each batch.
+- No data is overwritten. Append-only.
 
 ---
 
 ## Transparency
 
-- All coded data published as CSV.
-- All four rubrics committed before coding begins.
-- Lens anonymization key committed in a sealed file, opened only during analysis.
-- All enumeration queries and raw results committed before coding begins.
-- This preregistration is timestamped by commit. No amendments after data collection begins without a dated commit explaining the change.
+- All prompts committed verbatim before Phase 2 begins.
+- Lens anonymization key committed in a sealed file, opened only during Phase 5 analysis.
+- All raw data published as JSON/CSV.
+- This preregistration is timestamped by commit. No amendments after Phase 2 begins without a dated commit explaining the change.
 
 ---
 
-*Preregistration designed collaboratively with Claude Opus 4.6 (via Claude Code) and GPT-5.4 (via Codex CLI, lens enumeration). Competing lenses selected from a catalog of 80+ frameworks to ensure fair comparison.*
+*Preregistration designed collaboratively with Claude Opus 4.6 (via Claude Code) and GPT-5.4 (via Codex CLI, lens enumeration). Eight competing lenses selected from a catalog of 80+ frameworks to ensure fair comparison at matched granularity.*

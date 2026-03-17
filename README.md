@@ -2,47 +2,42 @@
 
 Does the [Natural Framework](https://june.kim/the-natural-framework) decompose information-processing systems with higher fidelity than existing lenses?
 
-## What this repo contains
-
-- **`PREREGISTRATION.md`** — Hypotheses, data sources, analysis plan, and stopping rules.
-- **`rubric.md`** — Coding rubrics for all four lenses (IPO, OODA, Intelligence Cycle, Natural Framework).
-- **`data/`** — Raw coded data (CSV), published after coding.
-
 ## The question
 
-Multiple frameworks decompose systems into named roles. The question is not whether failures "fit" into bins — any taxonomy with enough bins achieves that. The question is which lens preserves the most information through the compression.
+Multiple frameworks decompose systems into named roles. The question is not whether things fit into bins — any taxonomy achieves that. The question is which lens preserves the most information through the compression. That is fidelity.
 
-**Fidelity:** Given only a role label, can you reconstruct what the component does? "Process" (IPO) tells you nothing. "Filter" (Natural Framework) tells you it gates. That difference is measurable.
+**Fidelity metric:** Map a component to a role label. From just the label, try to reconstruct what the component does. The lens that enables the best reconstruction wins.
 
 ## Lenses compared
 
+Eight lenses, selected from a [catalog of 80+](https://github.com/kimjune01/natural-framework-fidelity/blob/master/lens_catalog.md), matched at 5-6 bins:
+
 | Lens | Bins | Origin |
 |------|------|--------|
-| **IPO** | 3 (Input, Process, Output) | Systems theory — baseline |
-| **OODA** | 4 (Observe, Orient, Decide, Act) | Military strategy |
-| **Intelligence Cycle** | 6 (Direction, Collection, Processing, Analysis, Dissemination, Feedback) | Intelligence community |
-| **Natural Framework** | 6 (Perceive, Cache, Filter, Attend, Remember, Consolidate) | [Formal specification](https://github.com/kimjune01/natural-framework) |
+| Viable System Model | 5 | Cybernetics |
+| MAPE-K | 5 | Autonomic computing |
+| Intelligence Cycle | 6 | Military/intelligence |
+| Shannon | 6 | Information theory |
+| Immune Response | 6 | Immunology |
+| F3EAD | 6 | Military operations |
+| CRISP-DM | 6 | Data science |
+| **Natural Framework** | 6 | [Formal specification](https://github.com/kimjune01/natural-framework) |
+
+## Method
+
+LLM-automated. GPT-5.4 and Sonnet 4.5 independently map data through all eight lenses. A blind judge scores reconstruction fidelity. No human coders.
 
 ## Hypotheses
 
-1. **H1 (fidelity):** Natural Framework labels produce higher reconstruction accuracy than all other lenses.
-2. **H2 (agreement):** Natural Framework produces higher inter-rater agreement than all other lenses.
-3. **H3 (actionability):** Natural Framework labels produce more actionable repair suggestions than all other lenses.
+1. **H1 (fidelity):** NF labels produce higher reconstruction accuracy than all other lenses at matched bin count.
+2. **H2 (consistency):** NF produces higher self-consistency across repeated mappings.
+3. **H3 (actionability):** NF labels produce more actionable repair suggestions for system failures.
 
 ## Data sources
 
 1. Bug issues from the top 5 RL frameworks (GitHub stars)
 2. Software post-mortems from [danluu/post-mortems](https://github.com/danluu/post-mortems)
 3. Ablation tables from NeurIPS 2024 oral/spotlight papers
-
-## Contributing
-
-Coders needed. Requirements:
-- Unfamiliar with the Natural Framework
-- Willing to apply all four rubrics to the same data
-- Available for ~8 hours of coding over 2 weeks
-
-Open an issue or email to volunteer.
 
 ## Related work
 

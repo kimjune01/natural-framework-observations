@@ -22,7 +22,7 @@ Multiple frameworks decompose information-processing systems into named roles. E
 
 Any framework can chain stages into a pipeline — type-compatible composition, expressible in TypeScript. The Natural Framework additionally specifies behavioral contracts: pre/postconditions at each role transition, where each role's postcondition guarantees what the next role's precondition requires. These contracts required a proof assistant (Lean 4) because they make claims about data content, not just data shape.
 
-**Central question:** Do those contracts buy anything empirically? If NF with contracts beats other 6-bin lenses on fidelity, the Lean proof was necessary — the behavioral guarantees carry information that plain labels don't. If NF ties, any six roles with reasonable definitions work equally well, and the proof is valid mathematics but unnecessary engineering. That would be devastating and worth knowing.
+**Central question:** Do NF's contracts buy anything that other frameworks' contracts don't? Shannon has mathematical theorems. The immune system has molecular requirements. VSM has variety axioms. NF has behavioral pre/postconditions about data content. Each lens gets its full specification — contracts included. The study tests which *type* of contract helps most for decomposing information-processing systems. If NF wins, data-content contracts are the right abstraction level. If Shannon or Immune wins, NF's contracts operate at the wrong level of specificity. If all lenses with contracts cluster together and beat those without, contracts help but the type doesn't matter.
 
 To control for granularity (more bins = more bits by construction), we compare lenses at matched bin counts: 5-6 bins. If NF beats other 6-bin lenses, the advantage is the contracts, not the resolution.
 
@@ -45,7 +45,7 @@ Eight lenses selected from a [catalog of 80+ frameworks](https://github.com/kimj
 
 Full role definitions and decision criteria: [`rubric.md`](rubric.md).
 
-Each lens gets its full specification as input to the LLM. NF uniquely specifies pre/postconditions at each role transition (the handshake: each role's postcondition is the next role's precondition). Other lenses do not specify contracts between stages, so they don't get them. This is not an unfair advantage — it's the variable under test.
+Each lens gets its full specification as input to the LLM — role tables, definitions, decision criteria, and whatever inter-stage contracts its original source defines. Shannon gets its mathematical theorems. The immune schema gets its molecular requirements. VSM gets its variety axioms. NF gets its pre/postconditions. No lens gets invented contracts; no lens is denied its own. Detailed contract research per lens: [`lenses/`](lenses/).
 
 ---
 
@@ -118,9 +118,9 @@ For each mapping result, a separate judge model reconstructs:
 >
 > The framework defines this role as: "[ROLE_DEFINITION]"
 >
-> [If NF: "This role has the following contract — Precondition: [PRE]. Postcondition: [POST]."]
+> [If the framework specifies inter-stage contracts: "This role has the following contract — [CONTRACT_TEXT]"]
 >
-> Based only on this label, definition, [and contract if provided,] write one sentence describing what this component most likely does. Be as specific as possible.
+> Based only on this label, definition, and any contracts provided, write one sentence describing what this component most likely does. Be as specific as possible.
 
 ### Phase 4: Judging
 
@@ -155,9 +155,9 @@ For system failures, an additional reconstruction task:
 >
 > The framework defines this role as: "[ROLE_DEFINITION]"
 >
-> [If NF: "This role's postcondition is: [POST]. The failure means this postcondition was violated."]
+> [If the framework specifies contracts for this role: "This role's contract is: [CONTRACT_TEXT]. The failure means this contract was violated."]
 >
-> Based only on this label, definition, [and contract violation if provided,] write one sentence suggesting how to fix the system.
+> Based only on this label, definition, and any contract violation, write one sentence suggesting how to fix the system.
 
 Judge scores the repair against the actual resolution (from the bug report or post-mortem) on the same 1-3 scale.
 
@@ -225,9 +225,9 @@ NF with contracts produces higher reconstruction scores than every other lens (w
 
 **Test:** Wilcoxon signed-rank, paired by data point, Holm-Bonferroni corrected. NF vs each 6-bin lens separately; NF vs each 5-bin lens separately.
 
-**Success:** NF mean > every other 6-bin lens, p < 0.05. The contracts carry information that plain labels don't.
+**Success:** NF mean > every other 6-bin lens, p < 0.05. Data-content contracts are the highest-fidelity abstraction level.
 
-**Failure:** Any 6-bin lens >= NF. The contracts are empirically inert — the Lean proof is valid but the behavioral guarantees don't improve description. Any six roles with reasonable definitions work equally well.
+**Failure:** Another 6-bin lens with contracts (Shannon, Immune) >= NF. NF's contracts operate at the wrong level of specificity — or the type of contract doesn't matter, only having one does.
 
 ### H2: Mapping Consistency
 
@@ -399,10 +399,11 @@ For each lens, compare GPT-5.4 and Sonnet 4.5 mappings. If the two models disagr
 |---------|------------|
 | NF wins H1-H4 | Contracts are load-bearing. The Lean proof was necessary. Ship the framework. |
 | NF wins H4 but ties H1 | The handshake predicts, but the labels don't describe better than alternatives. The ordering theory is load-bearing; the vocabulary is not. The proof was necessary for the wrong reason. |
-| NF ties all 6-bin lenses on H1 | **The devastating result.** Contracts are empirically inert. Any six roles with reasonable definitions work equally well. The Lean proof is valid mathematics and unnecessary engineering. |
+| NF ties all 6-bin lenses on H1 | **Devastating if lenses without contracts.** Any six roles work equally well. But if all lenses *with* contracts cluster above those without, the finding is: contracts help, type doesn't matter. |
 | Shannon beats NF on H2 but loses H1 | Mathematical crispness aids consistency but not fidelity. Crisp categories can be consistently wrong. |
 | MAPE-K beats NF on H3 | Engineering-native vocabulary is more actionable than formal contracts. Practitioners need familiar terms, not postconditions. |
-| Immune ties NF on H1 | The biological decomposition is equally high-fidelity. NF's contracts may have been reverse-engineered from biology. |
+| Immune ties NF on H1 | Molecular-level contracts are equally high-fidelity. NF and Immune may be the same lens at different abstraction levels. |
+| Shannon beats NF on H1 | Information-theoretic contracts are more useful than behavioral ones. Mathematical rigor > domain specificity. |
 | All 6-bin lenses cluster on H1, but NF separates on H4 | The best possible outcome for the theory. Six bins is the right number (any vocabulary works for description), but the contracts predict what labels can't. |
 | NF loses all five | The six roles are a formal specification with no practical advantage. |
 
@@ -485,7 +486,7 @@ data/
 
 **LLM bias (all hypotheses).** Both mapper models were trained on text describing all eight lenses. If one lens appears more in training data, the model may apply it more fluently — reflecting training distribution, not lens quality. Cross-model comparison partially controls for this.
 
-**Rubric asymmetry.** NF gets pre/postconditions; other lenses don't. This is intentional — each lens gets its full specification, and only NF specifies contracts. But it means NF's rubric contains more information by design. If NF wins, the question is whether the contracts *deserve* to carry that information or whether any lens would improve with invented contracts. This is addressed by the study design: we test each lens as-is, not each lens enhanced with contracts.
+**Contract research quality.** Each lens gets its contracts as documented in its canonical sources. The researcher has deeper familiarity with NF's contracts than with, say, Shannon's theorems or VSM's variety axioms. Mitigation: contract research for each lens is committed in [`lenses/`](lenses/) and can be audited. The LLM sees only the rubric text.
 
 ---
 

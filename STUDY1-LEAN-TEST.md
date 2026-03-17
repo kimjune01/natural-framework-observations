@@ -22,7 +22,7 @@
 
 The Natural Framework (NF) decomposes information-processing systems into six roles with formal pre/postconditions proven in Lean 4. Each postcondition guarantees the next precondition — the contracts *compose*.
 
-This study asks whether composable contract text carries information when used as prompt context for LLM-based decomposition. NF's six roles can be stated three ways: with composable contracts, with shuffled contracts (same text, wrong assignment), or with no contracts (labels only). If composable contracts outperform shuffled ones at the same token count, the specific arrangement matters. If shuffled contracts outperform bare labels, even misassigned contract text helps. If all three perform equally, the role names carry all the information.
+This study asks whether composable contract text carries information when used as prompt context for LLM-based decomposition. NF's six roles can be stated three ways: with composable contracts, with shuffled contracts (same text, wrong assignment), or with no contracts (labels only). If composable contracts outperform shuffled ones at the same token count, the specific arrangement matters. If shuffled contracts outperform bare labels, even misassigned contract text helps. If all three perform equally, the role names and definitions carry all the recoverable information, with contracts adding no detectable value.
 
 This is an LLM-evaluation study. It tests whether composable contract text improves LLM-mediated decomposition of software artifacts. It does not test whether Lean proofs are necessary for software engineering, whether these contracts are correct descriptions of real systems, or whether the framework generalizes beyond this task.
 
@@ -82,7 +82,7 @@ Same roles, same definitions. **No pre/postconditions.**
 
 **H1 comparison (NF vs NF-scrambled):** Same roles, same definitions, same token count. Only difference: composition. Length-controlled.
 
-**H2 comparison (NF-scrambled vs NF-bare):** Same roles, same definitions. NF-scrambled has more text. Not length-controlled — if NF-scrambled wins, it might be more tokens.
+**Exploratory comparison (NF-scrambled vs NF-bare):** Same roles, same definitions. NF-scrambled has more text. Not length-controlled — if NF-scrambled wins, it might be more tokens.
 
 ---
 
@@ -124,7 +124,7 @@ RL repos have explicit perceive/act/learn loops where NF roles are architectural
 
 **Deduplication:** If the same component appears in multiple issues or rows, keep the first occurrence in enumeration order.
 
-**Ambiguous cases:** If unsure whether a data point qualifies, include it. The sequential design tolerates noise; exclusion introduces researcher discretion.
+**Ambiguous cases:** Flag with `uncertain: true` in the data point record. Include in primary analysis. Report sensitivity analysis with uncertain cases excluded.
 
 ---
 
@@ -132,9 +132,11 @@ RL repos have explicit perceive/act/learn loops where NF roles are architectural
 
 Single model: GPT-5.4 via codex CLI. Cross-model replication left to future work.
 
+**Generation settings:** Temperature = 1.0 (codex CLI default). Seeds cannot be fixed via codex CLI — the 3 runs per data point capture stochastic variation. All raw responses are logged verbatim. If codex CLI exposes temperature or seed control in the future, fix temperature = 0.7 and log it.
+
 ### Phase 1: Data Enumeration
 
-Run all queries mechanically. Commit raw results before any mapping begins. Randomize data point order before Phase 2 — this is the processing order for sequential analysis.
+Run all queries mechanically. Commit results as `data/enumeration/source1_repos.csv`, `data/enumeration/source2_postmortems.csv`, `data/enumeration/source3_papers.csv` before any screening begins. These snapshots freeze the sampling frame. Randomize qualified data point order into `data/processing_order.csv` before Phase 2 — this is the processing order for sequential analysis.
 
 ### Phase 2: Mapping
 
@@ -157,11 +159,11 @@ For each data point and each condition:
 
 **Token counts:** Record and report token counts for each condition's rubric. NF and NF-scrambled must be within 5% of each other.
 
-**Unmapped items:** Fidelity score = 0. Excluded from actionability. Included in fidelity analysis.
+**Unmapped items:** Excluded from fidelity scoring (Phases 3-4) and actionability (Phase 5). Unmapped rate is reported as a separate pre-registered outcome. If a data point is unmapped under one condition but mapped under another, the mapped conditions still receive fidelity scores — the unmapped condition simply contributes no paired observation for that data point.
 
 **Mapping outcomes (pre-registered, reported before fidelity):**
 - Unmapped rate per condition. If one condition produces significantly more "unmapped" responses, it's harder to use, independent of fidelity.
-- Role assignment distribution per condition. Chi-squared test for uniformity.
+- Role assignment distribution per condition. Chi-squared test comparing NF vs NF-scrambled distributions (do composable contracts shift which roles get assigned?).
 - Cross-condition agreement: for data points mapped by all three conditions, do NF and NF-scrambled assign the same role? (They share definitions, so disagreement indicates contract text influences mapping, not just reconstruction.)
 
 ### Phase 3: Reconstruction
@@ -178,7 +180,7 @@ For each data point and each condition:
 
 ### Phase 4: Judging
 
-Judge model scores reconstruction fidelity, blind to condition identity ("Lens A"/"Lens B"/"Lens C", randomized per data point):
+Judge model scores reconstruction fidelity with condition labels masked ("Lens A"/"Lens B"/"Lens C", randomized per data point). Note: outputs may carry stylistic traces of their condition, so this is label masking, not full blinding.
 
 **Judge prompt** (used verbatim):
 
@@ -201,7 +203,9 @@ Judge model scores reconstruction fidelity, blind to condition identity ("Lens A
 
 **Human validation subset:** 20 data points, stratified random sample (balanced across sources). Two human raters score the same reconstructions on the same 1-3 rubric, blind to condition. Report human-human Cohen's κ and human-LLM agreement. If human-LLM κ < 0.4, results are suspect.
 
-### Phase 5: Actionability (Sources 1 and 2 only)
+### Phase 5: Actionability (Sources 1 and 2 only, with resolution)
+
+**Eligibility:** Only failures with an explicitly described resolution/remediation in the source text. If the resolution has multiple parts, use the first stated remediation. Exclude failures where the resolution is "unclear," "ongoing," or "not yet resolved."
 
 **Repair prompt** (used verbatim; for NF-bare, contract lines are omitted):
 
@@ -290,8 +294,9 @@ Report per hypothesis:
 
 ### Pre-registered analyses (not hypotheses)
 
-- **Mapping outcomes:** Unmapped rate, role distribution, cross-condition agreement (reported before fidelity)
-- **Per-source BF:** Compute H1's BF separately for each source. If the effect is driven by one source, the pooled result is misleading.
+- **Mapping outcomes:** Unmapped rate, role distribution, cross-condition agreement (reported before fidelity).
+- **Per-source BF:** Compute H1's BF separately for each source (minimum 10 data points per source before reporting). If the effect is driven by one source, the pooled result is misleading.
+- **Reconstruction-given-matched-role:** For data points where NF and NF-scrambled assign the same role, recompute H1's BF on this subset only. If the effect disappears when mapping is held constant, composition helps mapping, not reconstruction. If the effect persists, composition helps reconstruction even when the role is identical.
 
 ### Exploratory (labeled as such)
 
@@ -331,7 +336,7 @@ Single model, sequential stopping. Worst case (inconclusive, run everything):
 | Phase 5 (actionability) | 9 calls | ~100 | ~900 |
 | **Total** | | | **~3,600** |
 
-**Expected case:** If composition effect is large, H1 stops at n ≈ 20-30. That's ~540-810 fidelity calls. H3 (actionability) continues on failure data points only.
+**Expected case:** If composition effect is large, H1 stops at n ≈ 20-30. That's ~540-810 fidelity calls. H2 (diagnosis) continues independently on failure data points.
 
 At ~15s per codex CLI call: worst case ~15 hours, expected case ~3-4 hours.
 
@@ -380,7 +385,7 @@ data/
 
 **Single model.** GPT-5.4 only. If the result is model-specific, we won't know. Cross-model replication is future work.
 
-**Token-count confound (H2 only).** H1 (NF vs NF-scrambled) is length-controlled. H2 (NF-scrambled vs NF-bare) is not. If NF-scrambled > NF-bare, the win might be more tokens.
+**Token-count confound (exploratory comparison only).** H1 (NF vs NF-scrambled) is length-controlled. The exploratory NF-scrambled vs NF-bare comparison is not. If NF-scrambled > NF-bare, the win might be more tokens.
 
 **Tech-domain bias.** All sources are software/ML. The framework claims broader generality.
 

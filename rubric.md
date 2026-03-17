@@ -1,10 +1,100 @@
-# Coding Rubric
+# Coding Rubrics
 
-*For use by independent coders. Do not read the Natural Framework post or the Lean proof before coding.*
+*Four lenses, equivalent detail. Each lens gets a decision tree, boundary cases, and training examples.*
 
 ---
 
-## Role Mapping (Sources 1, 2, 3)
+## Lens 1: IPO (Input, Process, Output)
+
+For each component, ask these questions in order. Take the **first** "yes."
+
+```
+1. Does it receive data from outside the system?
+   YES → Input
+
+2. Does it produce data that leaves the system?
+   YES → Output
+
+3. Everything else?
+   → Process
+```
+
+### Boundary cases
+
+| Boundary | Rule |
+|----------|------|
+| Input vs Process | If it receives AND transforms, code as Input (entry point takes priority) |
+| Process vs Output | If it transforms AND emits, code as Output (exit point takes priority) |
+
+---
+
+## Lens 2: OODA (Observe, Orient, Decide, Act)
+
+For each component, ask these questions in order. Take the **first** "yes."
+
+```
+1. Does it gather information from the environment?
+   YES → Observe
+
+2. Does it analyze, synthesize, or build a model from observations?
+   YES → Orient
+
+3. Does it choose between alternatives or select a course of action?
+   YES → Decide
+
+4. Does it execute a decision or produce an effect?
+   YES → Act
+```
+
+### Boundary cases
+
+| Boundary | Distinguishing question |
+|----------|----------------------|
+| Observe vs Orient | Does it just receive, or does it also interpret? Observe = raw intake. Orient = interpretation. |
+| Orient vs Decide | Does it analyze to understand, or analyze to choose? Orient = building the picture. Decide = picking from the picture. |
+| Decide vs Act | Does it select, or does it execute? Decide = choosing what to do. Act = doing it. |
+
+---
+
+## Lens 3: Intelligence Cycle (Direction, Collection, Processing, Analysis, Dissemination, Feedback)
+
+For each component, ask these questions in order. Take the **first** "yes."
+
+```
+1. Does it define what information the system needs?
+   YES → Direction
+
+2. Does it gather raw data from sources?
+   YES → Collection
+
+3. Does it convert raw data into a usable format (parse, clean,
+   normalize)?
+   YES → Processing
+
+4. Does it evaluate processed data and produce assessments or
+   conclusions?
+   YES → Analysis
+
+5. Does it distribute results to downstream consumers?
+   YES → Dissemination
+
+6. Does it use consumer responses to inform the next cycle's
+   requirements?
+   YES → Feedback
+```
+
+### Boundary cases
+
+| Boundary | Distinguishing question |
+|----------|----------------------|
+| Collection vs Processing | Does it gather from a source, or transform what's already gathered? Collection = acquisition. Processing = format conversion. |
+| Processing vs Analysis | Does it clean/normalize, or does it evaluate/conclude? Processing = format. Analysis = meaning. |
+| Dissemination vs Feedback | Does it send results out, or does it receive reactions back? Dissemination = push. Feedback = pull. |
+| Direction vs Feedback | Direction defines requirements at the start. Feedback refines requirements based on outcomes. First cycle = Direction. Subsequent adjustment = Feedback. |
+
+---
+
+## Lens 4: Natural Framework (Perceive, Cache, Filter, Attend, Remember, Consolidate)
 
 For each component, ask these questions in order. Take the **first** "yes."
 
@@ -32,45 +122,25 @@ For each component, ask these questions in order. Take the **first** "yes."
    YES → Consolidate
 ```
 
-### Decision rules
-
-- **One role per component.** If a component seems to serve two roles, choose the primary one — the role it would break if removed.
-- **"I don't know" is valid.** If none of the six questions clearly applies, code as `unmapped` and note why.
-- **Use the component's function, not its name.** A module called "filter" might actually rank items (Attend). A module called "memory" might just buffer (Cache). Read what it does.
-
-### Role definitions (one sentence each)
-
-| Role | Definition |
-|------|-----------|
-| **Perceive** | Ingests external input and converts it to the system's internal representation. |
-| **Cache** | Temporarily holds data between processing steps without transforming it. |
-| **Filter** | Removes, gates, or rejects data that fails a criterion — reduces quantity. |
-| **Attend** | Ranks, scores, or selects among items that passed filtering — determines priority. |
-| **Remember** | Writes processed data to persistent storage for later retrieval. |
-| **Consolidate** | Reads past outcomes from storage and updates system parameters or policies. |
-
 ### Boundary cases
-
-These are the hardest distinctions. When in doubt, apply the decision tree strictly (first "yes" wins).
 
 | Boundary | Distinguishing question |
 |----------|----------------------|
-| Cache vs. Remember | Is the data lost when the process restarts? Cache = yes (temporary). Remember = no (persistent). |
-| Filter vs. Attend | Does it reject outright, or does it rank? Filter = binary pass/fail. Attend = relative ordering. |
-| Attend vs. Consolidate | Does it select from current data, or update behavior based on past data? Attend = current cycle. Consolidate = cross-cycle learning. |
-| Perceive vs. Cache | Does it transform format (parsing, tokenizing), or hold data unchanged? Perceive = format change. Cache = same format, held in buffer. |
+| Cache vs Remember | Is the data lost when the process restarts? Cache = yes (temporary). Remember = no (persistent). |
+| Filter vs Attend | Does it reject outright, or does it rank? Filter = binary pass/fail. Attend = relative ordering. |
+| Attend vs Consolidate | Does it select from current data, or update behavior based on past data? Attend = current cycle. Consolidate = cross-cycle learning. |
+| Perceive vs Cache | Does it transform format (parsing, tokenizing), or hold data unchanged? Perceive = format change. Cache = same format, held in buffer. |
 
 ---
 
-## Death Condition Mapping (Sources 1, 2)
+## Death Condition Mapping (Sources 1 and 2 only)
 
-For each documented failure, ask these questions in order. Take the **first** "yes."
+For system failures, also code a death condition. This is specific to the Natural Framework lens but applied to all data points from Sources 1 and 2.
 
 ```
 1. Did a specific component break, crash, produce wrong output,
    or get removed?
    YES → Broken step
-   Note which role the broken component serves (use role mapping above).
 
 2. Did the system stop receiving new input, or start processing
    its own output as if it were new input?
@@ -81,98 +151,93 @@ For each documented failure, ask these questions in order. Take the **first** "y
    YES → Decaying input
 ```
 
-### Decision rules
+**One death condition per failure.** Code the root cause.
 
-- **One death condition per failure.** If multiple things went wrong, code the root cause — the first thing that broke.
-- **"Doesn't map" is valid.** If the failure doesn't fit any of the three, code as `unmapped` and note why. These cases are data — they test H1.
-- **The failure must be described in the source.** Don't infer failure mechanisms that aren't documented. If the post-mortem says "it broke" but not how, code as `insufficient_detail`.
-
-### Death condition definitions
-
-| Condition | Definition | Example |
-|-----------|-----------|---------|
-| **Broken step** | A role's implementation failed — removed, crashed, wrong output, misconfigured. | A parser threw an exception on valid input; a logging service went down; a scoring function returned NaN. |
-| **Closed loop** | The system stopped receiving fresh external input, or recycled its own output as input. | A crawler that stops fetching new pages and reprocesses cached ones; a feedback loop with no new observations. |
-| **Decaying input** | The input source degraded gradually — data quality declined, distribution shifted, references went stale. | A recommendation model trained on 2020 data deployed in 2024; a sensor losing calibration over months. |
+**"Doesn't map" is valid.** Code as `unmapped` and note why.
 
 ---
 
-## Ablation Coding (Source 3)
+## General Rules (all lenses)
 
-For each ablation row:
-
-1. **Component name:** The name of the component removed (as stated in the paper).
-2. **Component description:** What the paper says it does (one sentence, verbatim or close paraphrase).
-3. **Role mapping:** Apply the role decision tree above.
-4. **Performance metric:** The paper's reported metric (name and value).
-5. **Baseline value:** The full model's performance on that metric.
-6. **Ablated value:** The performance with this component removed.
-7. **Performance drop:** Baseline minus ablated (positive = removing it hurts).
-
-### Normalization
-
-To compare across papers with different metrics:
-
-```
-normalized_drop = (baseline - ablated) / baseline
-```
-
-If higher metric = better (accuracy, F1): use formula as-is.
-If lower metric = better (loss, error rate): negate the result.
+- **One role per component per lens.** If a component seems to serve two roles, choose the primary one.
+- **"Unmapped" is valid.** If none of the roles clearly apply, code as `unmapped` and note why.
+- **Use the component's function, not its name.** A module called "filter" might rank items. Read what it does.
+- **Apply the decision tree strictly.** First "yes" wins. Don't deliberate between roles.
 
 ---
 
 ## Training Examples
 
-Practice on these before coding real data. Discuss disagreements, clarify the rubric if needed.
+Practice on these before coding real data. Map each example under **all four lenses**.
 
-### Example 1: Bug Report
+### Example 1: Replay Buffer (RL Bug)
 
-> "The replay buffer fills up and stops accepting new transitions. The agent
-> keeps training on the same old experiences. Performance plateaus."
+> "The replay buffer fills up and stops accepting new transitions. The agent keeps training on the same old experiences."
 
-- **Death condition:** Closed loop (the system processes recycled data instead of new input)
-- **Broken component role:** Cache (the replay buffer holds transitions temporarily for sampling)
+| Lens | Role | Rationale |
+|------|------|-----------|
+| IPO | Process | It's internal to the system, neither input nor output |
+| OODA | Orient | It organizes observations for the agent to learn from |
+| Intelligence Cycle | Processing | It stores and formats raw experience for analysis |
+| Natural Framework | Cache | It temporarily holds transitions for sampling |
 
-### Example 2: Ablation Row
+### Example 2: Attention Pooling (Ablation)
 
-> "We remove the attention pooling layer. Instead of computing weighted
-> combinations of features, we use mean pooling."
+> "We remove the attention pooling layer. Instead of computing weighted combinations of features, we use mean pooling."
 
-- **Component:** Attention pooling layer
-- **Role:** Attend (it scores and weights features — selecting by priority)
-- **Performance drop:** Whatever the table says
+| Lens | Role | Rationale |
+|------|------|-----------|
+| IPO | Process | It transforms data internally |
+| OODA | Orient | It synthesizes features into a representation |
+| Intelligence Cycle | Analysis | It evaluates and weights features |
+| Natural Framework | Attend | It scores and weights features by relevance |
 
-### Example 3: Post-Mortem
+### Example 3: Health Check (Post-Mortem)
 
-> "The load balancer stopped sending health checks. Unhealthy backends stayed
-> in rotation and served errors for 45 minutes."
+> "The load balancer stopped sending health checks. Unhealthy backends stayed in rotation and served errors."
 
-- **Death condition:** Broken step (the health-check mechanism — a Filter — stopped working)
-- **Broken component role:** Filter (it gates backends by health status, rejecting unhealthy ones)
+| Lens | Role | Rationale |
+|------|------|-----------|
+| IPO | Process | It's internal monitoring |
+| OODA | Observe | It gathers information about backend status |
+| Intelligence Cycle | Collection | It gathers operational data from backends |
+| Natural Framework | Filter | It gates backends by health status, rejecting unhealthy ones |
 
-### Example 4: Ambiguous Case
+### Example 4: Distribution Shift
 
 > "Performance gradually degraded as user behavior shifted after a UI redesign."
 
-- **Death condition:** Decaying input (the data distribution shifted — the model's training data no longer matches reality)
+| Lens | Role | Rationale |
+|------|------|-----------|
+| IPO | Input | The input data changed character |
+| OODA | Observe | The observations no longer match the model |
+| Intelligence Cycle | Collection | The collected data's nature shifted |
+| Natural Framework | Perceive | The input distribution changed, degrading encoding quality |
 
-### Example 5: Substrate Destruction (Broken Step on Remember)
+### Example 5: Network Partition (Post-Mortem)
 
 > "The outage was caused by a network partition between data centers."
 
-- **Death condition:** Broken step. Remember is the persistent store, and the store IS the substrate. A network partition destroyed the system's ability to write to and read from its store. That's Remember failing — not an unmapped external event.
-- **Broken component role:** Remember (the partition severed access to the persistent store)
+| Lens | Role | Rationale |
+|------|------|-----------|
+| IPO | Process | Infrastructure failure affecting processing |
+| OODA | Act | The system could not execute its decisions |
+| Intelligence Cycle | Dissemination | Results could not reach consumers |
+| Natural Framework | Remember | The partition severed access to the persistent store |
 
-### Example 6: Substrate Destruction (Catastrophic)
+Note: this case may be coded `unmapped` under some lenses if the coder judges that infrastructure failure is outside the lens's scope. That's valid data.
 
-> "The company was shut down after losing a government antitrust lawsuit.
-> All operations ceased within 90 days."
+### Example 6: Government Shutdown
 
-- **Death condition:** Broken step. The company's substrate — legal standing, bank accounts, contracts — is what Remember writes to. The lawsuit destroyed the store. The pipeline was functional; the thing it persisted to no longer existed.
-- **Broken component role:** Remember (the substrate was removed)
-- **Note:** If the root cause was the company's own illegal behavior, trace further: the compliance process (Filter) broke first, which eventually caused the substrate to be destroyed. Code the root cause per the rubric: broken step on Filter.
+> "The company was shut down after losing a government antitrust lawsuit. All operations ceased."
+
+| Lens | Role | Rationale |
+|------|------|-----------|
+| IPO | `unmapped` | External force, not an IPO stage failure |
+| OODA | `unmapped` | External force, not a loop stage failure |
+| Intelligence Cycle | `unmapped` | External force, not a cycle stage failure |
+| Natural Framework | `unmapped` | Substrate destruction — a precondition failure, not a role failure. If root cause was the company's own illegal behavior, trace further: Filter (compliance) broke. |
 
 ---
 
-*Rubric finalized before coder training. Clarifications from training will be appended below this line, committed before real coding begins.*
+*Rubrics finalized before coder training. Clarifications from training will be appended below this line, committed before real coding begins.*
